@@ -1,3 +1,3 @@
 mod qssmonitor_config;
 
-pub use qssmonitor_config::QssMontiorConfig;
+pub use qssmonitor_config::QssMonitorConfig;
