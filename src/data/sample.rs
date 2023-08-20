@@ -5,12 +5,12 @@ use std::fmt::Display;
 use crate::process::ProcessName;
 use crate::x::WindowName;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Sample {
-    timestamp: DateTime<chrono::Utc>,
-    process_name: ProcessName,
-    window_name: WindowName,
-    pid: i32,
+    pub timestamp: DateTime<chrono::Utc>,
+    pub process_name: ProcessName,
+    pub window_name: WindowName,
+    pub pid: i32,
 }
 
 impl Sample {
