@@ -4,6 +4,7 @@ use crate::data::Sample;
 use crate::{process::ProcessName, x::WindowName};
 use chrono::Duration;
 
+#[derive(Clone)]
 pub struct Streak {
     pid: i32,
     process_name: ProcessName,
@@ -18,7 +19,7 @@ impl From<(Vec<Sample>, Duration)> for Streak {
         assert_ne!(value.len(), 0);
         let pid = value[0].pid;
         let process_name = value[0].process_name.clone();
-        let duration = interval * (value.len() - 1).try_into().unwrap();
+        let duration = interval * (value.len()).try_into().unwrap();
         let window_names = value
             .into_iter()
             .map(|sample| sample.window_name)

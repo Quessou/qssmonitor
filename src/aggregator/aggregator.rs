@@ -1,7 +1,8 @@
 use chrono::Duration;
 
-use super::Streak;
 use crate::data::sample::Sample;
+use crate::data::Report;
+use crate::data::Streak;
 
 pub struct Aggregator {
     sample_interval: Duration,
@@ -44,12 +45,19 @@ impl Aggregator {
         } else if !self.current_streak.is_empty() {
             self.register_streak()
         } else {
-            Ok(()) // TODO : When do we enter this case ??
+            self.extend_streak(sample)
         }
     }
 
     pub fn register_sample(&mut self, sample: Sample) {
         self.update_streaks(&sample).unwrap();
-        // TODO : How do we store samples here ??
+        self.stored_samples_count += 1;
+    }
+
+    pub fn get_report(&mut self) -> Report {
+        let mut streaks = self.streaks.clone();
+        let last_streak = (self.current_streak.clone(), self.sample_interval).into();
+        streaks.push(last_streak);
+        Report::new(streaks, self.sample_interval, self.stored_samples_count)
     }
 }
