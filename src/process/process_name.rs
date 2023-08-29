@@ -1,4 +1,4 @@
-#[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
+#[derive(Hash, Eq, PartialOrd, PartialEq, Clone, serde::Serialize, serde::Deserialize, Debug)]
 pub struct ProcessName(pub String);
 
 impl From<String> for ProcessName {

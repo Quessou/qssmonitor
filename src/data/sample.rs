@@ -7,7 +7,7 @@ use crate::x::WindowName;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Sample {
-    pub timestamp: DateTime<chrono::Utc>,
+    pub timestamp: DateTime<chrono::Local>,
     pub process_name: ProcessName,
     pub window_name: WindowName,
     pub pid: i32,
@@ -16,7 +16,7 @@ pub struct Sample {
 impl Sample {
     pub fn new(process_name: ProcessName, window_name: WindowName, pid: i32) -> Self {
         Sample {
-            timestamp: chrono::offset::Utc::now(),
+            timestamp: chrono::Local::now(),
             process_name,
             window_name,
             pid,

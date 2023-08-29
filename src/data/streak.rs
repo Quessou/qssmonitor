@@ -4,12 +4,14 @@ use crate::data::Sample;
 use crate::{process::ProcessName, x::WindowName};
 use chrono::Duration;
 
+/// Set of samples that are contiguous in time, without the focus of the main window being changed
 #[derive(Clone)]
 pub struct Streak {
-    pid: i32,
-    process_name: ProcessName,
-    window_names: HashSet<WindowName>,
-    duration: Duration,
+    pub pid: i32,
+    pub process_name: ProcessName,
+    pub window_names: HashSet<WindowName>,
+    pub duration: Duration,
+    pub begin_date: chrono::DateTime<chrono::Local>,
 }
 
 impl From<(Vec<Sample>, Duration)> for Streak {
@@ -29,6 +31,7 @@ impl From<(Vec<Sample>, Duration)> for Streak {
             process_name,
             window_names,
             duration,
+            begin_date: chrono::Local::now(),
         }
     }
 }

@@ -34,7 +34,7 @@ impl Aggregator {
 
         let mut current_streak = vec![];
         std::mem::swap(&mut current_streak, &mut self.current_streak);
-        let streak: Streak = (current_streak, self.sample_interval).into();
+        let streak = (current_streak, self.sample_interval).into();
         self.streaks.push(streak);
         Ok(())
     }
