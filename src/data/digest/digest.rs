@@ -1,56 +1,26 @@
-use std::ops::Add;
-
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use serde_with;
 
-use super::Streak;
+use crate::data::streak::StreakDigest;
+use crate::data::wrappers::DurationWrapper;
+use crate::data::Streak;
 use crate::process::ProcessName;
 
-use super::report::Report;
+use crate::data::report::Report;
 
-#[serde_with::serde_as]
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
-struct DurationWrapper {
-    #[serde_as(as = "serde_with::DurationSeconds<i64>")]
-    duration: chrono::Duration,
-}
-
-impl Add for DurationWrapper {
-    type Output = DurationWrapper;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        DurationWrapper {
-            duration: self.duration + rhs.duration,
-        }
-    }
-}
-
-impl Default for DurationWrapper {
-    fn default() -> Self {
-        Self {
-            duration: chrono::Duration::seconds(0),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-struct StreakDigest {
-    process_name: ProcessName,
-    longest_streak_duration: DurationWrapper,
-    average_streak_duration: DurationWrapper,
-}
+use super::ProductivityData;
 
 /// Compilation of data (*with processings, so there is some data loss*) that can be requested from
 /// an outside client
 #[serde_with::serde_as]
 #[derive(Serialize, Deserialize)]
 pub struct Digest {
-    begin_date: chrono::DateTime<chrono::Local>,
-    end_date: chrono::DateTime<chrono::Local>,
-    time_by_process: Vec<(ProcessName, DurationWrapper)>,
-    streak_data: Vec<StreakDigest>,
-    productive_time: DurationWrapper,
+    pub begin_date: chrono::DateTime<chrono::Local>,
+    pub end_date: chrono::DateTime<chrono::Local>,
+    pub time_by_process: Vec<(ProcessName, DurationWrapper)>,
+    pub streak_data: Vec<StreakDigest>,
+    pub productivity_data: Option<ProductivityData>,
 }
 
 fn group_streaks_by_process_name<'a>(streaks: &'a Vec<Streak>) -> Vec<Vec<&'a Streak>> {
@@ -76,11 +46,8 @@ fn get_begin_and_end_dates(
     (begin_date, end_date)
 }
 
-fn get_time_by_process(streaks: &Vec<Streak>) -> Vec<(ProcessName, DurationWrapper)> {
-    //let mut time_by_process: Vec<(ProcessName, DurationWrapper)> = vec![];
-    let grouped_streaks = group_streaks_by_process_name(&streaks);
-
-    let time_by_process: Vec<(ProcessName, DurationWrapper)> = grouped_streaks
+fn aggregate_durations(grouped_streaks: &Vec<Vec<&Streak>>) -> Vec<(ProcessName, DurationWrapper)> {
+    grouped_streaks
         .into_iter()
         .map(|s| {
             (
@@ -90,9 +57,14 @@ fn get_time_by_process(streaks: &Vec<Streak>) -> Vec<(ProcessName, DurationWrapp
             )
         })
         .map(|(name, d)| (name, DurationWrapper { duration: d }))
-        .collect();
+        .collect()
+}
 
-    time_by_process
+fn get_time_by_process(streaks: &Vec<Streak>) -> Vec<(ProcessName, DurationWrapper)> {
+    //let mut time_by_process: Vec<(ProcessName, DurationWrapper)> = vec![];
+    let grouped_streaks = group_streaks_by_process_name(&streaks);
+
+    aggregate_durations(&grouped_streaks)
 }
 
 impl TryFrom<Report> for Digest {
@@ -104,12 +76,12 @@ impl TryFrom<Report> for Digest {
         }
 
         let (begin_date, end_date) = get_begin_and_end_dates(&report);
-        let time_by_process = get_time_by_process(&report.streaks);
-        let streak_data: Vec<StreakDigest> = vec![];
-        let productive_time = DurationWrapper {
-            duration: chrono::Duration::seconds(0),
-        };
-        // TODO : Compute productive time
+        let grouped_streaks = group_streaks_by_process_name(&report.streaks);
+        let time_by_process = aggregate_durations(&grouped_streaks);
+        let streak_data: Vec<StreakDigest> = grouped_streaks
+            .into_iter()
+            .map(|s| StreakDigest::from(s))
+            .collect();
 
         // Return value
         Ok(Digest {
@@ -117,7 +89,7 @@ impl TryFrom<Report> for Digest {
             end_date,
             time_by_process,
             streak_data,
-            productive_time,
+            productivity_data: None,
         })
     }
 }
