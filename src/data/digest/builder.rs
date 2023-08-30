@@ -1,5 +1,5 @@
 use super::productivity_computation::ProductivityComputation;
-use super::{Digest, ProductivityData};
+use super::Digest;
 use crate::data::report::Report;
 
 pub struct Builder<Prod>
@@ -22,18 +22,12 @@ where
     }
 
     pub fn build_digest(&self, report: Report) -> Digest {
-        //let productive_time =
-        // TODO : check errors here
-        let digest = report.try_into().unwrap();
+        let productivity_data = self
+            .productivity_computation
+            .compute_productivity(&report, &self.unproductive_apps);
+        let mut digest: Digest = report.try_into().unwrap();
 
-        self.fill_productive_time(digest)
-    }
-
-    pub fn fill_productive_time(&self, digest: Digest) -> Digest {
-        let productivity_data = ProductivityData {
-            total_time: todo!(),
-            productive_time: todo!(),
-        };
+        digest.productivity_data = Some(productivity_data);
         digest
     }
 }
