@@ -1,6 +1,7 @@
 use config::Config;
 use config::File;
 
+mod aggregator;
 mod data;
 mod default_config;
 mod filesystem;
@@ -31,6 +32,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _read_config = loaded_config.try_deserialize::<QssMonitorConfig>().unwrap();
 
     let sample = data::SampleBuilder::default().build_sample();
+    let mut aggregator = aggregator::Aggregator::new(chrono::Duration::seconds(5));
     println!("{}", sample);
+    aggregator.register_sample(sample);
     Ok(())
 }

@@ -5,18 +5,18 @@ use std::fmt::Display;
 use crate::process::ProcessName;
 use crate::x::WindowName;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Sample {
-    timestamp: DateTime<chrono::Utc>,
-    process_name: ProcessName,
-    window_name: WindowName,
-    pid: i32,
+    pub timestamp: DateTime<chrono::Local>,
+    pub process_name: ProcessName,
+    pub window_name: WindowName,
+    pub pid: i32,
 }
 
 impl Sample {
     pub fn new(process_name: ProcessName, window_name: WindowName, pid: i32) -> Self {
         Sample {
-            timestamp: chrono::offset::Utc::now(),
+            timestamp: chrono::Local::now(),
             process_name,
             window_name,
             pid,
