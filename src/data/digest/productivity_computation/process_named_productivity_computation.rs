@@ -11,7 +11,7 @@ impl ProductivityComputation for ProcessNamedProductivityComputation {
     fn compute_productivity(
         &self,
         report: &Report,
-        non_productive_apps: &Vec<String>,
+        non_productive_apps: &[String],
     ) -> ProductivityData {
         //let mut productivity_data = ProductivityData::default();
         struct TmpProductivityData {
@@ -56,25 +56,15 @@ pub mod tests {
         let streaks: Vec<Streak> = vec![
             Streak {
                 pid: 10,
-                process_name: ProcessName {
-                    0: "toto".to_owned(),
-                },
-                window_names: [WindowName {
-                    0: "toto".to_owned(),
-                }]
-                .into(),
+                process_name: ProcessName("toto".to_owned()),
+                window_names: [WindowName("toto".to_owned())].into(),
                 duration: chrono::Duration::seconds(30),
                 begin_date: chrono::Local::now(),
             },
             Streak {
                 pid: 100,
-                process_name: ProcessName {
-                    0: "tata".to_owned(),
-                },
-                window_names: [WindowName {
-                    0: "toto".to_owned(),
-                }]
-                .into(),
+                process_name: ProcessName("tata".to_owned()),
+                window_names: [WindowName("toto".to_owned())].into(),
                 duration: chrono::Duration::seconds(20),
                 begin_date: chrono::Local::now() + chrono::Duration::seconds(30),
             },

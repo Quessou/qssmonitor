@@ -1,6 +1,5 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use serde_with;
 
 use crate::data::streak::StreakDigest;
 use crate::data::wrappers::DurationWrapper;
@@ -23,7 +22,7 @@ pub struct Digest {
     pub productivity_data: Option<ProductivityData>,
 }
 
-fn group_streaks_by_process_name<'a>(streaks: &'a Vec<Streak>) -> Vec<Vec<&'a Streak>> {
+fn group_streaks_by_process_name(streaks: &[Streak]) -> Vec<Vec<&Streak>> {
     let mut grouped_streaks: Vec<Vec<&Streak>> = vec![];
     for (_, group) in &streaks.iter().group_by(|s| &s.process_name) {
         grouped_streaks.push(group.collect());
@@ -46,13 +45,13 @@ fn get_begin_and_end_dates(
     (begin_date, end_date)
 }
 
-fn aggregate_durations(grouped_streaks: &Vec<Vec<&Streak>>) -> Vec<(ProcessName, DurationWrapper)> {
+fn aggregate_durations(grouped_streaks: &[Vec<&Streak>]) -> Vec<(ProcessName, DurationWrapper)> {
     grouped_streaks
-        .into_iter()
+        .iter()
         .map(|s| {
             (
                 s.first().unwrap().process_name.clone(),
-                s.into_iter()
+                s.iter()
                     .fold(chrono::Duration::seconds(0), |acc, s| acc + s.duration),
             )
         })
@@ -60,9 +59,9 @@ fn aggregate_durations(grouped_streaks: &Vec<Vec<&Streak>>) -> Vec<(ProcessName,
         .collect()
 }
 
-fn get_time_by_process(streaks: &Vec<Streak>) -> Vec<(ProcessName, DurationWrapper)> {
+fn get_time_by_process(streaks: &[Streak]) -> Vec<(ProcessName, DurationWrapper)> {
     //let mut time_by_process: Vec<(ProcessName, DurationWrapper)> = vec![];
-    let grouped_streaks = group_streaks_by_process_name(&streaks);
+    let grouped_streaks = group_streaks_by_process_name(streaks);
 
     aggregate_durations(&grouped_streaks)
 }
@@ -80,7 +79,7 @@ impl TryFrom<Report> for Digest {
         let time_by_process = aggregate_durations(&grouped_streaks);
         let streak_data: Vec<StreakDigest> = grouped_streaks
             .into_iter()
-            .map(|s| StreakDigest::from(s))
+            .map(StreakDigest::from)
             .collect();
 
         // Return value
@@ -102,11 +101,11 @@ mod tests {
     use super::*;
     use crate::process::ProcessName;
 
-    fn build_streak(process_name: &String, duration: i64) -> Streak {
+    fn build_streak(process_name: &str, duration: i64) -> Streak {
         // Let's say we dont care about the other parameters
         Streak {
             pid: 10,
-            process_name: ProcessName(process_name.clone()),
+            process_name: ProcessName(process_name.to_owned()),
             window_names: HashSet::default(),
             duration: chrono::Duration::seconds(duration),
             begin_date: chrono::DateTime::<chrono::Local>::default(),
