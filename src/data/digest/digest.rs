@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::data::streak::StreakDigest;
 use crate::data::wrappers::DurationWrapper;
+use crate::data::wrappers::ProcessName;
 use crate::data::Streak;
-use crate::process::ProcessName;
 
 use crate::data::report::Report;
 

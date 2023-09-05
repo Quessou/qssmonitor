@@ -1,3 +1,4 @@
+use super::website_detection::WebsiteNameDetector;
 use super::Sample;
 use crate::process;
 use crate::x;
@@ -6,6 +7,7 @@ use crate::x;
 pub struct SampleBuilder {
     xdo_requester: x::Requester,
     process_requester: process::Requester,
+    website_name_detector: WebsiteNameDetector,
 }
 
 impl SampleBuilder {
@@ -14,6 +16,8 @@ impl SampleBuilder {
         let window_name = self.xdo_requester.get_window_name(window);
         let pid = self.xdo_requester.get_window_pid(window);
         let process_name = self.process_requester.get_process_name(pid);
-        Sample::new(process_name.into(), window_name.into(), pid)
+        let website_name = self.website_name_detector.get_website_name(&window_name);
+
+        Sample::new(process_name.into(), window_name.into(), website_name, pid)
     }
 }

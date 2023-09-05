@@ -43,8 +43,13 @@ impl Aggregator {
         if self.current_streak.is_empty() || self.current_streak[0].pid == sample.pid {
             self.extend_streak(sample)
         } else if !self.current_streak.is_empty() {
-            self.register_streak()
+            if let Err(_) = self.register_streak() {
+                return Err(());
+            }
+            self.extend_streak(sample)
         } else {
+            // When do we enter this case ??
+            // TODO : Test with a breakpoint
             self.extend_streak(sample)
         }
     }

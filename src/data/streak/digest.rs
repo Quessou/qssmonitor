@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use super::Streak;
 use crate::data::wrappers::DurationWrapper;
 
-use crate::process::ProcessName;
+use crate::data::wrappers::ProcessName;
 
 #[derive(Serialize, Deserialize)]
 pub struct StreakDigest {

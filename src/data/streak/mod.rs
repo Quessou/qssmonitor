@@ -2,8 +2,8 @@ mod digest;
 
 use std::{assert_ne, collections::HashSet};
 
+use crate::data::wrappers::{ProcessName, WindowName};
 use crate::data::Sample;
-use crate::{process::ProcessName, x::WindowName};
 use chrono::Duration;
 pub use digest::StreakDigest;
 
