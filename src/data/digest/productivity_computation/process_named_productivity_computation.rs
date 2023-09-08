@@ -50,7 +50,7 @@ impl ProductivityComputation for ProcessNamedProductivityComputation {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use crate::{data::Streak, process::ProcessName, x::WindowName};
+    use crate::data::{wrappers::ProcessName, wrappers::WindowName, Streak};
 
     fn build_dummy_report() -> Report {
         let streaks: Vec<Streak> = vec![

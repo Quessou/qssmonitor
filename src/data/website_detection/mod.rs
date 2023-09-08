@@ -27,6 +27,13 @@ pub struct WebsiteNameDetector {
 }
 
 impl WebsiteNameDetector {
+    pub fn new(
+        non_productive_websites: Vec<(WebsiteName, Vec<WebsiteNameDetectionCriteria>)>,
+    ) -> Self {
+        Self {
+            non_productive_websites,
+        }
+    }
     pub fn get_website_name(&self, window_name: &str) -> Option<WebsiteName> {
         let detected_website_name_data = self
             .non_productive_websites

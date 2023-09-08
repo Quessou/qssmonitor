@@ -99,7 +99,7 @@ mod tests {
     use std::collections::HashSet;
 
     use super::*;
-    use crate::process::ProcessName;
+    use crate::data::wrappers::ProcessName;
 
     fn build_streak(process_name: &str, duration: i64) -> Streak {
         // Let's say we dont care about the other parameters
