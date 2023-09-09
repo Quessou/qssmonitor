@@ -47,32 +47,20 @@ impl Aggregator {
         Ok(())
     }
 
-    fn handle_browser_sample(&mut self, sample: &Sample) -> Result<(), ()> {
-        Ok(())
-    }
-    fn handle_nonbrowser_sample(&mut self, sample: &Sample) -> Result<(), ()> {
-        if self.current_streak.is_empty() || self.current_streak[0].pid == sample.pid {
-            self.extend_streak(sample)
-        } else if !self.current_streak.is_empty() {
-            if let Err(_) = self.register_streak() {
-                return Err(());
-            }
-            self.extend_streak(sample)
-        } else {
-            // When do we enter this case ??
-            // TODO : Test with a breakpoint at some point
-            self.extend_streak(sample)
-        }
-    }
-
     fn update_streaks(&mut self, sample: &Sample) -> Result<(), ()> {
-        /*
+        let r = if let streak_extension_strategy::StreakAction::RegisterAndExtend = self
+            .streak_extension_strategy
+            .get_streak_action(&self.current_streak, &sample)
         {
-            self.handle_browser_sample(sample)
+            self.register_streak()
         } else {
-            self.handle_nonbrowser_sample(sample)
-        }*/
-        Ok(())
+            Ok(())
+        };
+        if r.is_err() {
+            return r;
+        }
+        println!("{}", sample);
+        self.extend_streak(sample)
     }
 
     pub fn register_sample(&mut self, sample: Sample) {

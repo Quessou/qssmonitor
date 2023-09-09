@@ -1,8 +1,8 @@
-use itertools;
-use itertools::Itertools;
+mod browser_data;
 
-use super::wrappers::WebsiteName;
-use super::wrappers::WindowName;
+use super::wrappers::{ProcessName, WebsiteName};
+
+pub(crate) use browser_data::BrowserData;
 
 pub enum WebsiteNameDetectionCriteria {
     StartsWith(String),
@@ -24,6 +24,7 @@ impl WebsiteNameDetectionCriteria {
 #[derive(Default)]
 pub struct WebsiteNameDetector {
     pub non_productive_websites: Vec<(WebsiteName, Vec<WebsiteNameDetectionCriteria>)>,
+    pub browser_data: Vec<BrowserData>,
 }
 
 impl WebsiteNameDetector {
@@ -32,16 +33,43 @@ impl WebsiteNameDetector {
     ) -> Self {
         Self {
             non_productive_websites,
+            browser_data: build_browser_data_list(),
         }
     }
-    pub fn get_website_name(&self, window_name: &str) -> Option<WebsiteName> {
-        let detected_website_name_data = self
-            .non_productive_websites
+    pub fn get_website_name(&self, process_name: &str, window_name: &str) -> Option<WebsiteName> {
+        let browser_data: Option<&BrowserData> = self
+            .browser_data
             .iter()
-            .find(|(_, criterias)| criterias.iter().any(|c| c.is_website_detected(window_name)));
+            .find(|d| process_name.ends_with(&d.browser_name));
+        let browser_data = match browser_data {
+            None => return None,
+            Some(b) => b,
+        };
+        let _binding = window_name.replace(&browser_data.window_name_suffix, "");
+        let cleared_window_name = _binding.trim();
+        let detected_website_name_data =
+            self.non_productive_websites.iter().find(|(_, criterias)| {
+                criterias
+                    .iter()
+                    .any(|c| c.is_website_detected(cleared_window_name))
+            });
         match detected_website_name_data {
             Some(s) => Some(s.0.clone()),
             None => None,
         }
     }
+}
+
+pub fn build_browser_data_list() -> Vec<BrowserData> {
+    return vec![
+        BrowserData::new("firefox".to_owned(), "— Mozilla Firefox".to_owned()),
+        BrowserData::new("chrome".to_owned(), "TODO".to_owned()),
+        BrowserData::new("chromium".to_owned(), "TODO".to_owned()),
+    ];
+}
+
+#[cfg(test)]
+mod tests {
+    // TODO : Write tests for get_website_name to debug it
+    pub fn test_get_website_name() {}
 }

@@ -52,8 +52,17 @@ impl Display for Sample {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Timestamp: {},\nProcess name : {},\nWindow name : {},\nPID : {}\n",
-            self.timestamp, self.process_name.0, self.window_name.0, self.pid
+            "Timestamp: {},\nProcess name : {},\nWindow name : {},\nWebsite name : {}\nPID : {}\n",
+            self.timestamp,
+            self.process_name.0,
+            self.window_name.0,
+            self.website_name
+                .as_ref()
+                .unwrap_or(&WebsiteName {
+                    0: "Productive I guess ?".to_owned()
+                })
+                .0,
+            self.pid
         )
     }
 }

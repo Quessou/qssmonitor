@@ -12,7 +12,7 @@ impl StreakExtensionStrategy for BrowserInclusiveStreakExtensionStrategy {
     fn get_streak_action(
         &self,
         current_streak: &[Sample],
-        next_sample: Sample,
+        next_sample: &Sample,
     ) -> super::StreakAction {
         if current_streak.is_empty() {
             return StreakAction::Extend;
@@ -71,6 +71,6 @@ mod tests {
                            "Switching back to a nonbrowser app should break the streak")]
     fn test_get_streak_action(previous_sample: Sample, next_sample: Sample) -> StreakAction {
         let strategy = BrowserInclusiveStreakExtensionStrategy::default();
-        strategy.get_streak_action(&vec![previous_sample], next_sample)
+        strategy.get_streak_action(&vec![previous_sample], &next_sample)
     }
 }
