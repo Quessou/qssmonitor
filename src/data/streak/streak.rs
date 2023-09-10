@@ -23,11 +23,11 @@ impl From<(Vec<Sample>, Duration)> for Streak {
         let pid = samples[0].pid;
         let process_name = samples[0].process_name.clone();
         let duration = interval * (samples.len()).try_into().unwrap();
+        let website_name = samples[0].website_name.clone();
         let window_names = samples
             .into_iter()
             .map(|sample| sample.window_name)
             .collect::<HashSet<WindowName>>();
-        let website_name = samples.first().unwrap().website_name;
         Streak {
             pid,
             process_name,

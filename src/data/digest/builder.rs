@@ -25,11 +25,9 @@ where
     }
 
     pub fn build_digest(&self, report: Report) -> Digest {
-        let productivity_data = self.productivity_computation.compute_productivity(
-            &report,
-            &self.unproductive_apps,
-            &self.unproductive_websites,
-        );
+        let productivity_data = self
+            .productivity_computation
+            .compute_productivity(&report, &self.unproductive_apps);
         let mut digest: Digest = report.try_into().unwrap();
 
         digest.productivity_data = Some(productivity_data);

@@ -1,6 +1,6 @@
 use crate::data::digest::ProductivityData;
 use crate::data::website_detection::{build_browser_data_list, BrowserData};
-use crate::data::wrappers::WebsiteName;
+use crate::data::wrappers::{DurationWrapper, WebsiteName};
 use crate::data::{Report, Streak};
 
 use super::ProductivityComputation;
@@ -11,10 +11,8 @@ struct CompleteProductivityComputation {
 }
 
 impl CompleteProductivityComputation {
-    pub fn new() -> Self {
-        Self {
-            browsers_data: build_browser_data_list(),
-        }
+    pub fn new(browsers_data: Vec<BrowserData>) -> Self {
+        Self { browsers_data }
     }
 }
 
@@ -23,35 +21,21 @@ impl ProductivityComputation for CompleteProductivityComputation {
         &self,
         report: &Report,
         non_productive_apps: &[String],
-        non_productive_websites: &[WebsiteName],
     ) -> ProductivityData {
-        // TODO : Mutualize this with the one in ProcessNamedProductivityComputation
-        struct TmpProductivityData {
-            pub total_time: chrono::Duration,
-            pub productive_time: chrono::Duration,
-        }
-        let mut tmp_producivity_data = TmpProductivityData {
-            total_time: chrono::Duration::seconds(0),
-            productive_time: chrono::Duration::seconds(0),
-        };
-
-        let browser_names = self
+        let browsers_names = self
             .browsers_data
             .iter()
             .map(|b| &b.browser_name)
             .collect::<Vec<_>>();
-        let compute_productive_time = |streak: Streak| -> chrono::Duration {
-            if self
-                .browsers_data
+        let compute_productive_time = |streak: &Streak| -> chrono::Duration {
+            if browsers_names
                 .iter()
-                .map(|d| &d.browser_name)
-                .any(|n| streak.process_name.0.contains(n))
+                .any(|&n| streak.process_name.0.contains(n))
             {
                 if streak.website_name.as_ref().is_none() {
                     return streak.duration;
                 }
-            }
-            if !non_productive_apps
+            } else if !non_productive_apps
                 .iter()
                 .any(|a| streak.process_name.0.contains(a))
             {
@@ -60,6 +44,67 @@ impl ProductivityComputation for CompleteProductivityComputation {
             chrono::Duration::seconds(0)
         };
 
-        ProductivityData::default()
+        let productive_time = report
+            .streaks
+            .iter()
+            .map(compute_productive_time)
+            .fold(chrono::Duration::seconds(0), |acc, d| acc + d);
+        let total_time = report
+            .streaks
+            .iter()
+            .fold(chrono::Duration::seconds(0), |acc, s| acc + s.duration);
+        ProductivityData {
+            total_time: DurationWrapper {
+                duration: total_time,
+            },
+            productive_time: DurationWrapper {
+                duration: productive_time,
+            },
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::data::{
+        wrappers::{ProcessName, WindowName},
+        Sample,
+    };
+    use test_case::test_case;
+
+    fn build_sample(process_name: &str, window_name: &str, website_name: &str, pid: i32) -> Sample {
+        Sample::new(
+            ProcessName {
+                0: process_name.to_owned(),
+            },
+            WindowName {
+                0: window_name.to_owned(),
+            },
+            Some(WebsiteName {
+                0: website_name.to_owned(),
+            }),
+            pid,
+        )
+    }
+
+    #[test_case(Report::new(
+            vec![
+            (vec![build_sample("toto", "toto", "mdr", 10), build_sample("toto", "toto", "mdr", 10)], 
+             chrono::Duration::seconds(5)).into()], chrono::Duration::seconds(5), 2 as u32) => chrono::Duration::seconds(0) )]
+    #[test_case(Report::new(
+            vec![
+            (vec![build_sample("toto", "toto", "mdr", 10), build_sample("toto", "toto", "mdr", 10)], 
+             chrono::Duration::seconds(5)).into(),(vec![build_sample("tutu", "toto", "", 10), build_sample("tutu", "toto", "mdr", 10)], 
+             chrono::Duration::seconds(5)).into()], chrono::Duration::seconds(5), 2 as u32) => chrono::Duration::seconds(10) )]
+    fn test_compute_productivity(report: Report) -> chrono::Duration {
+        let computation = CompleteProductivityComputation::new(vec![BrowserData {
+            browser_name: "toto".to_owned(),
+            window_name_suffix: "".to_owned(),
+        }]);
+        computation
+            .compute_productivity(&report, &vec![])
+            .productive_time
+            .duration
     }
 }

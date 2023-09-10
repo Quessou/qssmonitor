@@ -107,6 +107,7 @@ mod tests {
             pid: 10,
             process_name: ProcessName(process_name.to_owned()),
             window_names: HashSet::default(),
+            website_name: None,
             duration: chrono::Duration::seconds(duration),
             begin_date: chrono::DateTime::<chrono::Local>::default(),
         }

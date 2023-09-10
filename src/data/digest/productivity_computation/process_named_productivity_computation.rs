@@ -12,7 +12,6 @@ impl ProductivityComputation for ProcessNamedProductivityComputation {
         &self,
         report: &Report,
         non_productive_apps: &[String],
-        non_productive_websites: &[WebsiteName],
     ) -> ProductivityData {
         //let mut productivity_data = ProductivityData::default();
         struct TmpProductivityData {
@@ -59,6 +58,7 @@ pub mod tests {
                 pid: 10,
                 process_name: ProcessName("toto".to_owned()),
                 window_names: [WindowName("toto".to_owned())].into(),
+                website_name: None,
                 duration: chrono::Duration::seconds(30),
                 begin_date: chrono::Local::now(),
             },
@@ -66,6 +66,7 @@ pub mod tests {
                 pid: 100,
                 process_name: ProcessName("tata".to_owned()),
                 window_names: [WindowName("toto".to_owned())].into(),
+                website_name: None,
                 duration: chrono::Duration::seconds(20),
                 begin_date: chrono::Local::now() + chrono::Duration::seconds(30),
             },

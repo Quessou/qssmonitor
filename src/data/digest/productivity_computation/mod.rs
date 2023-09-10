@@ -10,6 +10,5 @@ pub trait ProductivityComputation: Default {
         &self,
         report: &Report,
         non_productive_apps: &[String],
-        non_productive_websites: &[WebsiteName],
     ) -> ProductivityData;
 }
