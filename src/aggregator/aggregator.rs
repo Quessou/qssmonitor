@@ -59,7 +59,6 @@ impl Aggregator {
         if r.is_err() {
             return r;
         }
-        println!("{}", sample);
         self.extend_streak(sample)
     }
 

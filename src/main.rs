@@ -16,7 +16,6 @@ use default_config::QssMonitorConfig;
 use logging::initialization::initialize_subscriber;
 
 use crate::aggregator::streak_extension_strategy::BrowserInclusiveStreakExtensionStrategy;
-use crate::data::sample_builder;
 use crate::data::website_detection::WebsiteNameDetector;
 
 fn build_non_productive_websites_list() -> Vec<(WebsiteName, Vec<WebsiteNameDetectionCriteria>)> {
@@ -81,7 +80,7 @@ fn build_non_productive_websites_list() -> Vec<(WebsiteName, Vec<WebsiteNameDete
             WebsiteName {
                 0: "Youtube".to_owned(),
             },
-            vec![Criteria::EndsWith("Youtube".to_owned())],
+            vec![Criteria::EndsWith("YouTube".to_owned())],
         ),
         (
             WebsiteName {
@@ -173,7 +172,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sample = sample_builder.build_sample();
     let mut aggregator = aggregator::Aggregator::new(
         chrono::Duration::seconds(5),
-        Box::new(BrowserInclusiveStreakExtensionStrategy::default()),
+        Box::new(BrowserInclusiveStreakExtensionStrategy::new()),
     );
     println!("{}", sample);
     aggregator.register_sample(sample);

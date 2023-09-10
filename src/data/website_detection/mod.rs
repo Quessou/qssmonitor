@@ -1,6 +1,6 @@
 mod browser_data;
 
-use super::wrappers::{ProcessName, WebsiteName};
+use super::wrappers::WebsiteName;
 
 pub(crate) use browser_data::BrowserData;
 
@@ -66,10 +66,4 @@ pub fn build_browser_data_list() -> Vec<BrowserData> {
         BrowserData::new("chrome".to_owned(), "TODO".to_owned()),
         BrowserData::new("chromium".to_owned(), "TODO".to_owned()),
     ];
-}
-
-#[cfg(test)]
-mod tests {
-    // TODO : Write tests for get_website_name to debug it
-    pub fn test_get_website_name() {}
 }

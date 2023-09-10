@@ -1,5 +1,5 @@
 use crate::data::digest::ProductivityData;
-use crate::data::wrappers::DurationWrapper;
+use crate::data::wrappers::{DurationWrapper, WebsiteName};
 use crate::data::Report;
 
 use super::ProductivityComputation;
@@ -12,6 +12,7 @@ impl ProductivityComputation for ProcessNamedProductivityComputation {
         &self,
         report: &Report,
         non_productive_apps: &[String],
+        non_productive_websites: &[WebsiteName],
     ) -> ProductivityData {
         //let mut productivity_data = ProductivityData::default();
         struct TmpProductivityData {

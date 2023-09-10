@@ -1,4 +1,5 @@
 mod digest;
+mod streak;
 
 use std::{assert_ne, collections::HashSet};
 
@@ -6,7 +7,8 @@ use crate::data::wrappers::{ProcessName, WindowName};
 use crate::data::Sample;
 use chrono::Duration;
 pub use digest::StreakDigest;
-
+pub use streak::Streak;
+/*
 /// Set of samples that are contiguous in time, without the focus of the main window being changed
 #[derive(Clone)]
 pub struct Streak {
@@ -38,3 +40,4 @@ impl From<(Vec<Sample>, Duration)> for Streak {
         }
     }
 }
+*/

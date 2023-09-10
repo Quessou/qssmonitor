@@ -1,6 +1,5 @@
 use std::{ffi::c_uchar, os::raw::c_int};
 
-
 use std::alloc;
 use x11::xlib::Window;
 
