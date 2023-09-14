@@ -1,3 +1,5 @@
+use clap::arg;
+use clap::Command;
 use config::Config;
 use config::File;
 
@@ -33,6 +35,15 @@ fn build_sample_builder(non_productive_websites: Vec<DetectionData>) -> SampleBu
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let command = Command::new("qssmonitor")
+        .about(
+            "Monitors the window in the foreground and computes statistics about your productivity",
+        )
+        .arg(arg!(--daemon "Launch the app in daemon mode"));
+    let arguments = command.get_matches();
+    if let Some(true) = arguments.get_one::<bool>("daemon") {
+        println!("Daemon mode !!");
+    }
     let config_file = File::with_name(filesystem::paths::get_config_file_path().to_str().unwrap());
     let config = QssMonitorConfig::default();
 
