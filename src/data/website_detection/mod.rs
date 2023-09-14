@@ -1,36 +1,23 @@
 mod browser_data;
+mod detection_criteria;
+mod detection_data;
+mod detection_discriminant;
 
 use super::wrappers::WebsiteName;
 
 pub(crate) use browser_data::BrowserData;
-
-pub enum WebsiteNameDetectionCriteria {
-    StartsWith(String),
-    Contains(String),
-    EndsWith(String),
-}
-
-impl WebsiteNameDetectionCriteria {
-    pub fn is_website_detected(&self, window_name: &str) -> bool {
-        use WebsiteNameDetectionCriteria::*;
-        match self {
-            StartsWith(s) => window_name.starts_with(s),
-            Contains(s) => window_name.contains(s),
-            EndsWith(s) => window_name.ends_with(s),
-        }
-    }
-}
+pub(crate) use detection_criteria::{DetectionCriteria, TomlSerializableDetectionCriteria};
+pub(crate) use detection_data::DetectionData;
+pub(crate) use detection_discriminant::DetectionDiscriminant;
 
 #[derive(Default)]
 pub struct WebsiteNameDetector {
-    pub non_productive_websites: Vec<(WebsiteName, Vec<WebsiteNameDetectionCriteria>)>,
+    pub non_productive_websites: Vec<DetectionData>,
     pub browser_data: Vec<BrowserData>,
 }
 
 impl WebsiteNameDetector {
-    pub fn new(
-        non_productive_websites: Vec<(WebsiteName, Vec<WebsiteNameDetectionCriteria>)>,
-    ) -> Self {
+    pub fn new(non_productive_websites: Vec<DetectionData>) -> Self {
         Self {
             non_productive_websites,
             browser_data: build_browser_data_list(),
@@ -47,14 +34,13 @@ impl WebsiteNameDetector {
         };
         let _binding = window_name.replace(&browser_data.window_name_suffix, "");
         let cleared_window_name = _binding.trim();
-        let detected_website_name_data =
-            self.non_productive_websites.iter().find(|(_, criterias)| {
-                criterias
-                    .iter()
-                    .any(|c| c.is_website_detected(cleared_window_name))
-            });
+        let detected_website_name_data = self.non_productive_websites.iter().find(|data| {
+            data.detection_criterias
+                .iter()
+                .any(|c| c.is_website_detected(cleared_window_name))
+        });
         match detected_website_name_data {
-            Some(s) => Some(s.0.clone()),
+            Some(s) => Some(s.website_name.clone()),
             None => None,
         }
     }

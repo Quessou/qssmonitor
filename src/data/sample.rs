@@ -59,9 +59,9 @@ impl Display for Sample {
             self.website_name
                 .as_ref()
                 .unwrap_or(&WebsiteName {
-                    0: "Productive I guess ?".to_owned()
+                    data: "Productive I guess ?".to_owned()
                 })
-                .0,
+                .data,
             self.pid
         )
     }

@@ -1,6 +1,6 @@
 use crate::data::digest::ProductivityData;
-use crate::data::website_detection::{build_browser_data_list, BrowserData};
-use crate::data::wrappers::{DurationWrapper, WebsiteName};
+use crate::data::website_detection::{BrowserData};
+use crate::data::wrappers::{DurationWrapper};
 use crate::data::{Report, Streak};
 
 use super::ProductivityComputation;

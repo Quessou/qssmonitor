@@ -1,5 +1,5 @@
 use crate::data::digest::ProductivityData;
-use crate::data::wrappers::{DurationWrapper, WebsiteName};
+use crate::data::wrappers::{DurationWrapper};
 use crate::data::Report;
 
 use super::ProductivityComputation;
