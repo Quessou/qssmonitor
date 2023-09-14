@@ -10,7 +10,7 @@ pub struct QssMonitorConfig {
     #[serde_as(as = "serde_with::DurationSeconds<i64>")]
     polling_interval: chrono::Duration,
     non_productive_apps: Vec<String>,
-    pub non_productive_website: Vec<DetectionData>, //NonProductiveWebsitesConfiguration,
+    pub non_productive_website: Vec<DetectionData>,
 }
 
 impl Default for QssMonitorConfig {

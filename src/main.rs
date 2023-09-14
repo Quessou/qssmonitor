@@ -1,6 +1,3 @@
-
-
-
 use config::Config;
 use config::File;
 
@@ -11,7 +8,6 @@ mod filesystem;
 mod logging;
 mod process;
 mod x;
-
 
 use data::website_detection::DetectionData;
 
@@ -43,7 +39,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _logging_guard = initialize_subscriber();
 
     if let Err(e) = filesystem::config_initialization::initialize_configuration(&config) {
-        // Isn't there something better to do here ?
+        // TODO: Isn't there something better to do here ?
         if e != configgen_rs::Error::ConfigDirectoryAlreadyExists(std::io::Error::new(
             std::io::ErrorKind::AlreadyExists,
             "",
@@ -54,23 +50,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     let loaded_config = Config::builder().add_source(config_file).build().unwrap();
     let _read_config = loaded_config.try_deserialize::<QssMonitorConfig>().unwrap();
-
-    /*
-    let toto = build_non_productive_websites_list();
-    let toto = toto
-        .into_iter()
-        .map(|t| t.into())
-        .collect::<Vec<DetectionData>>();
-    #[derive(serde::Serialize, serde::Deserialize)]
-    struct Gngn {
-        toto: Vec<DetectionData>,
-    }
-    let gngn = Gngn { toto };
-    match toml::to_string(&gngn) {
-        Ok(s) => println!("{}", s),
-        Err(e) => println!("{:?} {}", e, e),
-    }
-    */
 
     let sample_builder = build_sample_builder(config.non_productive_website);
     let sample = sample_builder.build_sample();

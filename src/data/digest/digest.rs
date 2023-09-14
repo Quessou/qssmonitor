@@ -60,7 +60,6 @@ fn aggregate_durations(grouped_streaks: &[Vec<&Streak>]) -> Vec<(ProcessName, Du
 }
 
 fn get_time_by_process(streaks: &[Streak]) -> Vec<(ProcessName, DurationWrapper)> {
-    //let mut time_by_process: Vec<(ProcessName, DurationWrapper)> = vec![];
     let grouped_streaks = group_streaks_by_process_name(streaks);
 
     aggregate_durations(&grouped_streaks)
