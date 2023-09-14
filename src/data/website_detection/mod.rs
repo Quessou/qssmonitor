@@ -6,7 +6,7 @@ mod detection_discriminant;
 use super::wrappers::WebsiteName;
 
 pub(crate) use browser_data::BrowserData;
-pub(crate) use detection_criteria::{DetectionCriteria, TomlSerializableDetectionCriteria};
+pub(crate) use detection_criteria::{DetectionCriteria};
 pub(crate) use detection_data::DetectionData;
 pub(crate) use detection_discriminant::DetectionDiscriminant;
 
@@ -39,17 +39,14 @@ impl WebsiteNameDetector {
                 .iter()
                 .any(|c| c.is_website_detected(cleared_window_name))
         });
-        match detected_website_name_data {
-            Some(s) => Some(s.website_name.clone()),
-            None => None,
-        }
+        detected_website_name_data.map(|s| s.website_name.clone())
     }
 }
 
 pub fn build_browser_data_list() -> Vec<BrowserData> {
-    return vec![
+    vec![
         BrowserData::new("firefox".to_owned(), "— Mozilla Firefox".to_owned()),
         BrowserData::new("chrome".to_owned(), "TODO".to_owned()),
         BrowserData::new("chromium".to_owned(), "TODO".to_owned()),
-    ];
+    ]
 }

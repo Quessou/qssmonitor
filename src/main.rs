@@ -72,7 +72,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     */
 
-    let sample_builder = build_sample_builder(config.non_productive_website.clone());
+    let sample_builder = build_sample_builder(config.non_productive_website);
     let sample = sample_builder.build_sample();
     let mut aggregator = aggregator::Aggregator::new(
         chrono::Duration::seconds(5),

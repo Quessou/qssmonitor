@@ -39,9 +39,9 @@ impl StreakExtensionStrategy for BrowserInclusiveStreakExtensionStrategy {
                 return StreakAction::Extend;
             }
 
-            return StreakAction::RegisterAndExtend;
+            StreakAction::RegisterAndExtend
         } else {
-            return StreakAction::Extend;
+            StreakAction::Extend
         }
     }
 }

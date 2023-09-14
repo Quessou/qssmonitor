@@ -50,15 +50,13 @@ impl Aggregator {
     fn update_streaks(&mut self, sample: &Sample) -> Result<(), ()> {
         let r = if let streak_extension_strategy::StreakAction::RegisterAndExtend = self
             .streak_extension_strategy
-            .get_streak_action(&self.current_streak, &sample)
+            .get_streak_action(&self.current_streak, sample)
         {
             self.register_streak()
         } else {
             Ok(())
         };
-        if r.is_err() {
-            return r;
-        }
+        r?;
         self.extend_streak(sample)
     }
 
