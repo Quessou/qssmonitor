@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::data::streak::StreakDigest;
 use crate::data::wrappers::DurationWrapper;
+use crate::data::wrappers::ProcessName;
 use crate::data::Streak;
-use crate::process::ProcessName;
 
 use crate::data::report::Report;
 
@@ -60,7 +60,6 @@ fn aggregate_durations(grouped_streaks: &[Vec<&Streak>]) -> Vec<(ProcessName, Du
 }
 
 fn get_time_by_process(streaks: &[Streak]) -> Vec<(ProcessName, DurationWrapper)> {
-    //let mut time_by_process: Vec<(ProcessName, DurationWrapper)> = vec![];
     let grouped_streaks = group_streaks_by_process_name(streaks);
 
     aggregate_durations(&grouped_streaks)
@@ -99,7 +98,7 @@ mod tests {
     use std::collections::HashSet;
 
     use super::*;
-    use crate::process::ProcessName;
+    use crate::data::wrappers::ProcessName;
 
     fn build_streak(process_name: &str, duration: i64) -> Streak {
         // Let's say we dont care about the other parameters
@@ -107,6 +106,7 @@ mod tests {
             pid: 10,
             process_name: ProcessName(process_name.to_owned()),
             window_names: HashSet::default(),
+            website_name: None,
             duration: chrono::Duration::seconds(duration),
             begin_date: chrono::DateTime::<chrono::Local>::default(),
         }

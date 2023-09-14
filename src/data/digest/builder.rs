@@ -1,6 +1,7 @@
 use super::productivity_computation::ProductivityComputation;
 use super::Digest;
 use crate::data::report::Report;
+use crate::data::wrappers::website_name::WebsiteName;
 
 pub struct Builder<Prod>
 where
@@ -8,16 +9,18 @@ where
 {
     productivity_computation: Prod,
     unproductive_apps: Vec<String>,
+    unproductive_websites: Vec<WebsiteName>,
 }
 
 impl<Prod> Builder<Prod>
 where
     Prod: ProductivityComputation,
 {
-    pub fn new(unproductive_apps: Vec<String>) -> Self {
+    pub fn new(unproductive_apps: Vec<String>, unproductive_websites: Vec<WebsiteName>) -> Self {
         Builder {
             productivity_computation: Prod::default(),
             unproductive_apps,
+            unproductive_websites,
         }
     }
 

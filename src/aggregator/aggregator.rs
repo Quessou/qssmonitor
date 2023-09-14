@@ -4,20 +4,28 @@ use crate::data::sample::Sample;
 use crate::data::Report;
 use crate::data::Streak;
 
+use super::streak_extension_strategy;
+use super::streak_extension_strategy::StreakExtensionStrategy;
+
 pub struct Aggregator {
     sample_interval: Duration,
     streaks: Vec<Streak>,
     current_streak: Vec<Sample>,
     stored_samples_count: u32,
+    streak_extension_strategy: Box<dyn StreakExtensionStrategy>,
 }
 
 impl Aggregator {
-    pub fn new(sample_interval: Duration) -> Self {
+    pub fn new(
+        sample_interval: Duration,
+        streak_extension_strategy: Box<dyn StreakExtensionStrategy>,
+    ) -> Self {
         Aggregator {
             sample_interval,
             streaks: vec![],
             current_streak: vec![],
             stored_samples_count: 0,
+            streak_extension_strategy,
         }
     }
 
@@ -40,13 +48,16 @@ impl Aggregator {
     }
 
     fn update_streaks(&mut self, sample: &Sample) -> Result<(), ()> {
-        if self.current_streak.is_empty() || self.current_streak[0].pid == sample.pid {
-            self.extend_streak(sample)
-        } else if !self.current_streak.is_empty() {
+        let r = if let streak_extension_strategy::StreakAction::RegisterAndExtend = self
+            .streak_extension_strategy
+            .get_streak_action(&self.current_streak, sample)
+        {
             self.register_streak()
         } else {
-            self.extend_streak(sample)
-        }
+            Ok(())
+        };
+        r?;
+        self.extend_streak(sample)
     }
 
     pub fn register_sample(&mut self, sample: Sample) {
