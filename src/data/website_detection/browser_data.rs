@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct BrowserData {
     pub browser_name: String,
     pub window_name_suffix: String,

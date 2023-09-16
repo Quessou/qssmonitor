@@ -1,6 +1,8 @@
 use super::Streak;
 use chrono::Duration;
 
+use axum::response::Response;
+
 /// Compilation of a set of `Streak`
 pub struct Report {
     pub streaks: Vec<Streak>,
@@ -17,3 +19,17 @@ impl Report {
         }
     }
 }
+
+impl std::string::ToString for Report {
+    fn to_string(&self) -> String {
+        format!("{}", self.samples_count)
+    }
+}
+
+/*
+impl Into<Response> for Report {
+    fn into(self) -> Response {
+        self.to_string().into()
+    }
+}
+*/

@@ -5,7 +5,7 @@ use crate::data::Sample;
 use chrono::Duration;
 
 /// Set of samples that are contiguous in time, without the focus of the main window being changed
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Streak {
     pub pid: i32,
     pub process_name: ProcessName,

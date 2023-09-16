@@ -4,7 +4,7 @@ use super::StreakExtensionStrategy;
 use crate::data::website_detection::{build_browser_data_list, BrowserData};
 use crate::data::Sample;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct BrowserInclusiveStreakExtensionStrategy {
     browser_data_list: Vec<BrowserData>,
 }

@@ -6,11 +6,11 @@ mod detection_discriminant;
 use super::wrappers::WebsiteName;
 
 pub(crate) use browser_data::BrowserData;
-pub(crate) use detection_criteria::{DetectionCriteria};
+pub(crate) use detection_criteria::DetectionCriteria;
 pub(crate) use detection_data::DetectionData;
 pub(crate) use detection_discriminant::DetectionDiscriminant;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct WebsiteNameDetector {
     pub non_productive_websites: Vec<DetectionData>,
     pub browser_data: Vec<BrowserData>,

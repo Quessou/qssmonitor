@@ -1,11 +1,18 @@
+use std::error::Error;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
 use clap::arg;
+use clap::ArgMatches;
 use clap::Command;
 use config::Config;
 use config::File;
 
 mod aggregator;
+mod core;
 mod data;
 mod default_config;
+mod endpoints;
 mod filesystem;
 mod logging;
 mod process;
@@ -19,6 +26,7 @@ use logging::initialization::initialize_subscriber;
 
 use crate::aggregator::streak_extension_strategy::BrowserInclusiveStreakExtensionStrategy;
 
+use crate::core::Core;
 use crate::data::website_detection::WebsiteNameDetector;
 
 fn build_website_name_detector(non_productive_websites: Vec<DetectionData>) -> WebsiteNameDetector {
@@ -34,22 +42,11 @@ fn build_sample_builder(non_productive_websites: Vec<DetectionData>) -> SampleBu
     )
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let command = Command::new("qssmonitor")
-        .about(
-            "Monitors the window in the foreground and computes statistics about your productivity",
-        )
-        .arg(arg!(--daemon "Launch the app in daemon mode"));
-    let arguments = command.get_matches();
-    if let Some(true) = arguments.get_one::<bool>("daemon") {
-        println!("Daemon mode !!");
-    }
+fn get_config() -> Result<QssMonitorConfig, Box<dyn Error>> {
     let config_file = File::with_name(filesystem::paths::get_config_file_path().to_str().unwrap());
-    let config = QssMonitorConfig::default();
+    let default_config = QssMonitorConfig::default();
 
-    let _logging_guard = initialize_subscriber();
-
-    if let Err(e) = filesystem::config_initialization::initialize_configuration(&config) {
+    if let Err(e) = filesystem::config_initialization::initialize_configuration(&default_config) {
         // TODO: Isn't there something better to do here ?
         if e != configgen_rs::Error::ConfigDirectoryAlreadyExists(std::io::Error::new(
             std::io::ErrorKind::AlreadyExists,
@@ -60,15 +57,49 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
     let loaded_config = Config::builder().add_source(config_file).build().unwrap();
-    let _read_config = loaded_config.try_deserialize::<QssMonitorConfig>().unwrap();
+    Ok(loaded_config.try_deserialize::<QssMonitorConfig>().unwrap())
+}
 
-    let sample_builder = build_sample_builder(config.non_productive_website);
-    let sample = sample_builder.build_sample();
-    let mut aggregator = aggregator::Aggregator::new(
+fn get_args() -> ArgMatches {
+    let command = Command::new("qssmonitor")
+        .about(
+            "Monitors the window in the foreground and computes statistics about your productivity",
+        )
+        .arg(arg!(--daemon "Launch the app in daemon mode"));
+    command.get_matches()
+}
+
+#[tokio::main]
+async fn main() {
+    initialize_subscriber().unwrap();
+    /*
+    let command = Command::new("qssmonitor")
+        .about(
+            "Monitors the window in the foreground and computes statistics about your productivity",
+        )
+        .arg(arg!(--daemon "Launch the app in daemon mode"));
+    let arguments = command.get_matches();
+    if let Some(true) = arguments.get_one::<bool>("daemon") {
+        println!("Daemon mode !!");
+    }
+    */
+    let args = get_args();
+    let read_config = match get_config() {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Could not read config : {:?}", e);
+            panic!();
+        }
+    };
+
+    let sample_builder = build_sample_builder(read_config.non_productive_website.clone());
+    let aggregator = aggregator::Aggregator::new(
+        // TODO : Replace by config value
         chrono::Duration::seconds(5),
         Box::new(BrowserInclusiveStreakExtensionStrategy::new()),
     );
-    println!("{}", sample);
-    aggregator.register_sample(sample);
-    Ok(())
+
+    let mut core = Core::new(sample_builder, aggregator);
+    let router = endpoints::generate_api(core.clone()).await;
+    core.run(read_config, args, Some(router)).await.unwrap();
 }
