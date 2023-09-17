@@ -19,6 +19,7 @@ impl Requester {
         let _guard = self.mtx.lock().await;
         unsafe {
             libxdo_sys::xdo_get_active_window(self.xdo, &mut window);
+            tracing::error!("{}", &window);
         }
         window
     }

@@ -7,6 +7,7 @@ use signal_hook_tokio::Signals;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::{
+    io::{AsyncWrite, AsyncWriteExt},
     sync::mpsc::channel,
     sync::Mutex,
     task::{self},
@@ -77,7 +78,15 @@ impl Core {
             {
                 interval.tick().await;
                 let sample = clone.sample_builder.lock().await.build_sample().await;
-                clone.aggregator.lock().await.register_sample(sample);
+                if sample.is_none() {
+                    tracing::warn!("Could not build sample, skipping");
+                    continue;
+                }
+                clone
+                    .aggregator
+                    .lock()
+                    .await
+                    .register_sample(sample.unwrap());
             }
             println!("We stopped sampling !");
         })
@@ -93,11 +102,19 @@ impl Core {
                 })
                 .await
                 .unwrap();
+            println!("Stopping webserver");
+            let file = tokio::fs::File::create("/home/maxime/tototo")
+                .await
+                .unwrap();
+            let mut writer = tokio::io::BufWriter::new(file);
+            writer.write_all("mdr".as_bytes()).await.unwrap();
+            writer.flush().await.unwrap();
         })
         .instrument(tracing::error_span!("Web server"));
 
         let signal_polling_task = task::spawn(async move {
-            let mut signals = Signals::new(&[SIGHUP, SIGTERM, SIGINT, SIGQUIT]).unwrap();
+            let mut signals =
+                Signals::new(&[SIGHUP, SIGTERM, SIGINT, SIGQUIT, SIGABRT, SIGTSTP]).unwrap();
             let handle = signals.handle();
             while let Some(signal) = signals.next().await {
                 match signal {
@@ -107,7 +124,35 @@ impl Core {
                         serving_sender.send(QssMonitorMessage::Stop).await.unwrap();
                         handle.close();
                     }
-                    _ => println!("Not a signal we care about"),
+                    SIGHUP => {
+                        println!("SIGHUP !!");
+                        sampling_sender.send(QssMonitorMessage::Stop).await.unwrap();
+                        serving_sender.send(QssMonitorMessage::Stop).await.unwrap();
+                        handle.close();
+                    }
+                    SIGABRT => {
+                        println!("SIGABRT !!");
+                        sampling_sender.send(QssMonitorMessage::Stop).await.unwrap();
+                        serving_sender.send(QssMonitorMessage::Stop).await.unwrap();
+                        handle.close();
+                    }
+                    /*
+                    SIGSTOP => {
+                        println!("SIGSTOP !!");
+                        sampling_sender.send(QssMonitorMessage::Stop).await.unwrap();
+                        serving_sender.send(QssMonitorMessage::Stop).await.unwrap();
+                        handle.close();
+                    }
+                    */
+                    SIGTSTP => {
+                        println!("SIGTSTP !!");
+                        sampling_sender.send(QssMonitorMessage::Stop).await.unwrap();
+                        serving_sender.send(QssMonitorMessage::Stop).await.unwrap();
+                        handle.close();
+                    }
+                    _ => {
+                        println!("Not a signal we care about")
+                    }
                 }
             }
             println!("GNGNGNGN");
