@@ -1,16 +1,21 @@
 use std::{assert_ne, collections::HashSet};
 
+use chrono::Duration;
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
+
 use crate::data::wrappers::{ProcessName, WebsiteName, WindowName};
 use crate::data::Sample;
-use chrono::Duration;
 
 /// Set of samples that are contiguous in time, without the focus of the main window being changed
-#[derive(Clone, Debug)]
+#[serde_as]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Streak {
     pub pid: i32,
     pub process_name: ProcessName,
     pub window_names: HashSet<WindowName>,
     pub website_name: Option<WebsiteName>,
+    #[serde_as(as = "serde_with::DurationSeconds<i64>")]
     pub duration: Duration,
     pub begin_date: chrono::DateTime<chrono::Local>,
 }

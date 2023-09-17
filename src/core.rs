@@ -1,6 +1,6 @@
-use axum::{extract::State, routing::get, Router};
+use axum::{Router};
 use clap::ArgMatches;
-use std::pin::Pin;
+
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::{
@@ -16,8 +16,7 @@ use crate::{
         website_detection::{DetectionData, WebsiteNameDetector},
         Report, SampleBuilder,
     },
-    default_config::QssMonitorConfig,
-    endpoints, process, x,
+    default_config::QssMonitorConfig, process, x,
 };
 
 #[derive(Clone, Debug)]
@@ -53,17 +52,6 @@ impl Core {
             //router: None,
         }
     }
-    /*
-    pub async fn generate_api(&mut self) -> Result<(), ()> {
-        let clone = self.clone();
-        let router = Router::new()
-            .route("/last_report", get(endpoints::get_last_report))
-            .with_state(clone);
-
-        self.router = Some(Arc::new(router));
-        Ok(())
-    }
-    */
 
     #[instrument]
     pub async fn run(
@@ -77,22 +65,22 @@ impl Core {
             tracing::error!("log at the beginning of the async move block");
             let mut interval = tokio::time::interval(Duration::new(1, 0));
             loop {
-                tracing::error!("inside the loop");
                 interval.tick().await;
                 let sample = clone.sample_builder.lock().await.build_sample().await;
                 clone.aggregator.lock().await.register_sample(sample);
             }
         })
-        .instrument(tracing::error_span!("UHUHUH"));
+        .instrument(tracing::error_span!("Sampling"));
 
         let serving_task = task::spawn(async move {
             axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
                 .serve(router.unwrap().into_make_service())
                 .await
                 .unwrap();
-        });
+        })
+        .instrument(tracing::error_span!("Web server"));
 
-        let _toto = futures::join!(sampling_task);
+        let _toto = futures::join!(sampling_task, serving_task);
 
         Ok(())
     }

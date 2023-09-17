@@ -16,7 +16,7 @@ unsafe impl Sync for Requester {}
 impl Requester {
     pub async fn get_active_window(&self) -> Window {
         let mut window: x11::xlib::Window = 0;
-        let guard = self.mtx.lock().await;
+        let _guard = self.mtx.lock().await;
         unsafe {
             libxdo_sys::xdo_get_active_window(self.xdo, &mut window);
         }

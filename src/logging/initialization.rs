@@ -1,5 +1,5 @@
-use tracing::subscriber::DefaultGuard;
-use tracing::Level;
+
+
 use tracing_subscriber;
 
 pub fn initialize_subscriber() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {

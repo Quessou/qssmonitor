@@ -1,6 +1,6 @@
 use std::error::Error;
-use std::sync::Arc;
-use tokio::sync::Mutex;
+
+
 
 use clap::arg;
 use clap::ArgMatches;
@@ -99,7 +99,7 @@ async fn main() {
         Box::new(BrowserInclusiveStreakExtensionStrategy::new()),
     );
 
-    let mut core = Core::new(sample_builder, aggregator);
+    let core = Core::new(sample_builder, aggregator);
     let router = endpoints::generate_api(core.clone()).await;
     core.run(read_config, args, Some(router)).await.unwrap();
 }
