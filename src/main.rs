@@ -1,7 +1,5 @@
 use std::error::Error;
 
-
-
 use clap::arg;
 use clap::ArgMatches;
 use clap::Command;
@@ -15,6 +13,7 @@ mod default_config;
 mod endpoints;
 mod filesystem;
 mod logging;
+mod messages;
 mod process;
 mod x;
 
