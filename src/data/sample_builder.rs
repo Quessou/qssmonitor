@@ -3,7 +3,7 @@ use super::Sample;
 use crate::process;
 use crate::x;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct SampleBuilder {
     // TODO: Make the interface x::Requester a bit more abstract
     xdo_requester: x::Requester,
@@ -23,10 +23,10 @@ impl SampleBuilder {
             website_name_detector,
         }
     }
-    pub fn build_sample(&self) -> Sample {
-        let window = self.xdo_requester.get_active_window();
-        let window_name = self.xdo_requester.get_window_name(window);
-        let pid = self.xdo_requester.get_window_pid(window);
+    pub async fn build_sample(&self) -> Sample {
+        let window = self.xdo_requester.get_active_window().await;
+        let window_name = self.xdo_requester.get_window_name(window).await;
+        let pid = self.xdo_requester.get_window_pid(window).await;
         let process_name = self.process_requester.get_process_name(pid);
         let website_name = self
             .website_name_detector

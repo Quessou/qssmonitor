@@ -1,22 +1,29 @@
-use std::{ffi::c_uchar, os::raw::c_int};
-
 use std::alloc;
+use std::{ffi::c_uchar, os::raw::c_int};
 use x11::xlib::Window;
 
+use tokio::sync::Mutex;
+
+#[derive(Debug)]
 pub struct Requester {
     xdo: *mut libxdo_sys::Struct_xdo,
+    mtx: Mutex<u8>,
 }
 
+unsafe impl Send for Requester {}
+unsafe impl Sync for Requester {}
+
 impl Requester {
-    pub fn get_active_window(&self) -> Window {
+    pub async fn get_active_window(&self) -> Window {
         let mut window: x11::xlib::Window = 0;
+        let _guard = self.mtx.lock().await;
         unsafe {
             libxdo_sys::xdo_get_active_window(self.xdo, &mut window);
         }
         window
     }
 
-    pub fn get_window_name(&self, window: Window) -> String {
+    pub async fn get_window_name(&self, window: Window) -> String {
         let mut name: *mut c_uchar = unsafe { alloc::alloc(alloc::Layout::new::<c_uchar>()) };
         let mut name_len: c_int = 0;
         let mut name_type: c_int = 0;
@@ -34,7 +41,7 @@ impl Requester {
         }
     }
 
-    pub fn get_window_pid(&self, window: Window) -> i32 {
+    pub async fn get_window_pid(&self, window: Window) -> i32 {
         unsafe { libxdo_sys::xdo_get_pid_window(self.xdo, window) }
     }
 }
@@ -42,7 +49,10 @@ impl Requester {
 impl Default for Requester {
     fn default() -> Self {
         let xdo = unsafe { libxdo_sys::xdo_new(std::ptr::null()) };
-        Self { xdo }
+        Self {
+            xdo,
+            mtx: Mutex::new(0),
+        }
     }
 }
 

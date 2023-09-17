@@ -7,6 +7,7 @@ use crate::data::Streak;
 use super::streak_extension_strategy;
 use super::streak_extension_strategy::StreakExtensionStrategy;
 
+#[derive(Debug)]
 pub struct Aggregator {
     sample_interval: Duration,
     streaks: Vec<Streak>,
@@ -61,6 +62,7 @@ impl Aggregator {
     }
 
     pub fn register_sample(&mut self, sample: Sample) {
+        tracing::info!("{:?}", sample);
         self.update_streaks(&sample).unwrap();
         self.stored_samples_count += 1;
     }
