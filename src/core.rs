@@ -136,14 +136,6 @@ impl Core {
                         serving_sender.send(QssMonitorMessage::Stop).await.unwrap();
                         handle.close();
                     }
-                    /*
-                    SIGSTOP => {
-                        println!("SIGSTOP !!");
-                        sampling_sender.send(QssMonitorMessage::Stop).await.unwrap();
-                        serving_sender.send(QssMonitorMessage::Stop).await.unwrap();
-                        handle.close();
-                    }
-                    */
                     SIGTSTP => {
                         println!("SIGTSTP !!");
                         sampling_sender.send(QssMonitorMessage::Stop).await.unwrap();
