@@ -3,23 +3,28 @@ use chrono::Duration;
 use crate::data::sample::Sample;
 use crate::data::Report;
 use crate::data::Streak;
+use crate::database::DatabaseAccess;
 
+use super::session::Session;
 use super::streak_extension_strategy;
 use super::streak_extension_strategy::StreakExtensionStrategy;
 
 #[derive(Debug)]
-pub struct Aggregator {
+pub struct Aggregator<T: DatabaseAccess> {
     sample_interval: Duration,
     streaks: Vec<Streak>,
     current_streak: Vec<Sample>,
     stored_samples_count: u32,
     streak_extension_strategy: Box<dyn StreakExtensionStrategy>,
+    db_access: T,
+    current_session: Option<Session>,
 }
 
-impl Aggregator {
+impl<DB: DatabaseAccess> Aggregator<DB> {
     pub fn new(
         sample_interval: Duration,
         streak_extension_strategy: Box<dyn StreakExtensionStrategy>,
+        db_access: DB,
     ) -> Self {
         Aggregator {
             sample_interval,
@@ -27,6 +32,8 @@ impl Aggregator {
             current_streak: vec![],
             stored_samples_count: 0,
             streak_extension_strategy,
+            db_access,
+            current_session: None,
         }
     }
 
@@ -72,5 +79,22 @@ impl Aggregator {
         let last_streak = (self.current_streak.clone(), self.sample_interval).into();
         streaks.push(last_streak);
         Report::new(streaks, self.sample_interval, self.stored_samples_count)
+    }
+
+    pub async fn start_session(&mut self) -> Result<(), ()> {
+        let db_access = &self.db_access;
+        match db_access.create_session(self.sample_interval).await {
+            Ok(id) => {
+                self.current_session = Some(Session {
+                    session_id: id,
+                    sample_interval: self.sample_interval,
+                });
+                Ok(())
+            }
+            Err(e) => {
+                tracing::error!("Could not create session : {:?}", e);
+                Err(())
+            }
+        }
     }
 }

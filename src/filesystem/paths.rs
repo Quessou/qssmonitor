@@ -9,3 +9,7 @@ pub fn get_config_dir_path() -> PathBuf {
 pub fn get_config_file_path() -> PathBuf {
     get_config_dir_path().join("config.toml")
 }
+
+pub fn get_db_file_path() -> PathBuf {
+    get_config_dir_path().join("database.sqlite")
+}

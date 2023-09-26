@@ -1,6 +1,7 @@
+// TODO : Remove me
+
 use super::Streak;
 use chrono::Duration;
-
 
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -30,11 +31,3 @@ impl std::string::ToString for Report {
         format!("{}", self.samples_count)
     }
 }
-
-/*
-impl Into<Response> for Report {
-    fn into(self) -> Response {
-        self.to_string().into()
-    }
-}
-*/
