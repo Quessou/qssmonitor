@@ -8,7 +8,7 @@ use sqlx::{
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::data::Streak;
+use crate::data::{streak::StreakRow, Streak};
 
 use super::DatabaseAccess;
 
@@ -49,7 +49,7 @@ impl DatabaseAccess for SqliteDatabaseAccess {
         let streak_id = insert_streak_query
             .execute(&mut *conn)
             .await
-            .unwrap()
+            .expect("Insertion in streak table failed")
             .last_insert_rowid();
 
         let res = sqlx::query::<Sqlite>(
@@ -59,8 +59,20 @@ impl DatabaseAccess for SqliteDatabaseAccess {
         .bind(streak_id)
         .execute(&mut *conn)
         .await
-        .unwrap();
+        .expect("Insertion in join table failed");
         Ok(streak_id)
+    }
+
+    async fn read_streak(&self, id: i64) -> Result<StreakRow, ()> {
+        let mut conn = self.database_connection.lock().await;
+        match sqlx::query_as::<Sqlite, StreakRow>("SELECT * FROM table_streak WHERE id = ?")
+            .bind(id)
+            .fetch_one(&mut *conn)
+            .await
+        {
+            Ok(r) => Ok(r),
+            Err(_) => Err(()),
+        }
     }
 }
 
