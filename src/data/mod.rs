@@ -1,3 +1,4 @@
+pub(crate) mod db_types;
 pub(crate) mod digest;
 pub(crate) mod report;
 pub(crate) mod sample;

@@ -8,7 +8,8 @@ use sqlx::{
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::data::{streak::StreakRow, Streak};
+use crate::data::db_types::{SessionRow, StreakRow};
+use crate::data::Streak;
 
 use super::DatabaseAccess;
 
@@ -73,6 +74,21 @@ impl DatabaseAccess for SqliteDatabaseAccess {
             Ok(r) => Ok(r),
             Err(_) => Err(()),
         }
+    }
+    async fn read_session(&self, id: i64) -> Result<SessionRow, ()> {
+        let mut conn = self.database_connection.lock().await;
+        let mut session =
+            match sqlx::query_as::<Sqlite, SessionRow>("SELECT * FROM table_session WHERE id = ?")
+                .bind(id)
+                .fetch_one(&mut *conn)
+                .await
+            {
+                Ok(r) => r,
+                Err(_) => return Err(()),
+            };
+        // TODO : Stuff the streaks *without using* the read_streak method which will use way more
+        // resource than necessary
+        Err(())
     }
 }
 
