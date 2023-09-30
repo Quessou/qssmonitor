@@ -90,7 +90,8 @@ impl<DB: DatabaseAccess + std::fmt::Debug + std::marker::Sync + 'static> Core<DB
                     .aggregator
                     .lock()
                     .await
-                    .register_sample(sample.unwrap());
+                    .register_sample(sample.unwrap())
+                    .await;
             }
             tracing::info!("Stopping sampling");
         })

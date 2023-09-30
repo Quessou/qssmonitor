@@ -15,7 +15,7 @@ pub struct Aggregator<T: DatabaseAccess> {
     streaks: Vec<Streak>,
     current_streak: Vec<Sample>,
     stored_samples_count: u32,
-    streak_extension_strategy: Box<dyn StreakExtensionStrategy>,
+    streak_extension_strategy: Box<dyn StreakExtensionStrategy + Send>,
     db_access: T,
     current_session: Option<Session>,
 }
@@ -23,7 +23,7 @@ pub struct Aggregator<T: DatabaseAccess> {
 impl<DB: DatabaseAccess> Aggregator<DB> {
     pub fn new(
         sample_interval: Duration,
-        streak_extension_strategy: Box<dyn StreakExtensionStrategy>,
+        streak_extension_strategy: Box<dyn StreakExtensionStrategy + Send>,
         db_access: DB,
     ) -> Self {
         Aggregator {
@@ -42,7 +42,7 @@ impl<DB: DatabaseAccess> Aggregator<DB> {
         Ok(())
     }
 
-    fn register_streak(&mut self) -> Result<(), ()> {
+    async fn register_streak(&mut self) -> Result<(), ()> {
         if self.current_streak.is_empty() {
             tracing::warn!("Trying to register an empty sample streak");
             return Err(());
@@ -51,16 +51,20 @@ impl<DB: DatabaseAccess> Aggregator<DB> {
         let mut current_streak = vec![];
         std::mem::swap(&mut current_streak, &mut self.current_streak);
         let streak = (current_streak, self.sample_interval).into();
+        self.db_access
+            .save_streak(&streak, self.current_session.as_ref().unwrap().session_id)
+            .await
+            .expect("Streak saving in DB failed");
         self.streaks.push(streak);
         Ok(())
     }
 
-    fn update_streaks(&mut self, sample: &Sample) -> Result<(), ()> {
-        let r = if let streak_extension_strategy::StreakAction::RegisterAndExtend = self
+    async fn update_streaks(&mut self, sample: &Sample) -> Result<(), ()> {
+        let streak_action = self
             .streak_extension_strategy
-            .get_streak_action(&self.current_streak, sample)
-        {
-            self.register_streak()
+            .get_streak_action(&self.current_streak, sample);
+        let r = if let streak_extension_strategy::StreakAction::RegisterAndExtend = streak_action {
+            self.register_streak().await
         } else {
             Ok(())
         };
@@ -68,9 +72,9 @@ impl<DB: DatabaseAccess> Aggregator<DB> {
         self.extend_streak(sample)
     }
 
-    pub fn register_sample(&mut self, sample: Sample) {
+    pub async fn register_sample(&mut self, sample: Sample) {
         tracing::info!("{:?}", sample);
-        self.update_streaks(&sample).unwrap();
+        self.update_streaks(&sample).await.unwrap();
         self.stored_samples_count += 1;
     }
 

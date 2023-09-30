@@ -27,6 +27,7 @@ use default_config::QssMonitorConfig;
 use logging::initialization::initialize_subscriber;
 
 use aggregator::streak_extension_strategy::BrowserInclusiveStreakExtensionStrategy;
+use messages::QssMonitorMessage;
 
 use crate::core::Core;
 use data::website_detection::WebsiteNameDetector;
@@ -86,6 +87,8 @@ async fn main() {
         println!("Daemon mode !!");
     }
     */
+    //let config = QssMonitorConfig::default();
+    //println!("{}", toml::to_string(&config).unwrap());
     let args = get_args();
     let read_config = match get_config() {
         Ok(c) => c,
