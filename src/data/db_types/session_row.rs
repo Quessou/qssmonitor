@@ -5,7 +5,7 @@ use sqlx::{sqlite::SqliteRow, FromRow, Row};
 pub struct SessionRow {
     id: i64,
     interval: Duration,
-    streaks: Vec<StreakRow>,
+    pub(super) streaks: Vec<StreakRow>,
 }
 
 impl FromRow<'_, SqliteRow> for SessionRow {
@@ -32,4 +32,8 @@ impl FromRow<'_, SqliteRow> for SessionRow {
             streaks: vec![],
         })
     }
+}
+
+pub fn insert_streaks(session: &mut SessionRow, streaks: Vec<StreakRow>) {
+    session.streaks = streaks;
 }

@@ -8,7 +8,8 @@ use sqlx::{
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::data::db_types::{SessionRow, StreakRow};
+use crate::data::db_types::session_row::insert_streaks;
+use crate::data::db_types::{session_row, SessionRow, StreakRow};
 use crate::data::Streak;
 
 use super::DatabaseAccess;
@@ -75,6 +76,7 @@ impl DatabaseAccess for SqliteDatabaseAccess {
             Err(_) => Err(()),
         }
     }
+
     async fn read_session(&self, id: i64) -> Result<SessionRow, ()> {
         let mut conn = self.database_connection.lock().await;
         let mut session =
@@ -86,22 +88,27 @@ impl DatabaseAccess for SqliteDatabaseAccess {
                 Ok(r) => r,
                 Err(_) => return Err(()),
             };
-        // TODO : Stuff the streaks *without using* the read_streak method which will use way more
-        // resource than necessary
-        Err(())
+        let streaks = match sqlx::query_as::<Sqlite, StreakRow>("SELECT * from table_streak, session_streak where session_streak.session_id = ?
+                                                                     AND session_streak.streak_id = table_streak.id").bind(id).fetch_all(&mut *conn).await {
+                                                                         Ok(r) => r,
+                                                                         Err(_) => return Err(())
+                                                                     };
+
+        session_row::insert_streaks(&mut session, streaks);
+        Ok(session)
     }
 }
 
 #[cfg(test)]
 pub mod tests {
-    use sqlx::{sqlite, Acquire, Row, SqlitePool};
+    use sqlx::{sqlite, Row, SqlitePool};
     use tempfile::{tempdir, TempDir};
 
     use crate::data::wrappers::{ProcessName, WebsiteName};
     use crate::database::init::apply_migrations;
 
     use super::*;
-    use std::{collections::HashSet, path::PathBuf};
+    use std::collections::HashSet;
 
     pub async fn create_tmp_db() -> (TempDir, SqlitePool) {
         let temp_dir = tempdir().expect("Could not create temporary file");
@@ -120,35 +127,55 @@ pub mod tests {
         SqliteDatabaseAccess::new(conn)
     }
 
+    pub fn build_some_streak(
+        duration: chrono::Duration,
+        pid: i32,
+        process_name: &str,
+        website_name: Option<WebsiteName>,
+    ) -> Streak {
+        Streak {
+            begin_date: chrono::Local::now(),
+            duration,
+            pid,
+            process_name: ProcessName {
+                0: process_name.to_owned(),
+            },
+            website_name,
+            window_names: HashSet::default(),
+        }
+    }
+    pub fn build_some_session() -> Session {}
+
     #[tokio::test]
     pub async fn test_save_streak() {
-        let session_id: i64 = 100;
-        let (temp_dir, pool) = create_tmp_db().await;
+        let streak_id = 100;
+        let (_temp_dir, pool) = create_tmp_db().await;
         apply_migrations(&pool).await.unwrap();
         let db_access = get_database_access(pool.acquire().await.unwrap());
-        let s = Streak {
-            begin_date: chrono::Local::now(),
-            duration: chrono::Duration::seconds(20),
-            pid: 10,
-            process_name: ProcessName {
-                0: "toto".to_owned(),
-            },
-            website_name: None,
-            window_names: HashSet::default(),
-        };
-        let streak_id = db_access.save_streak(&s, 100).await.unwrap();
+        let s = build_some_streak(chrono::Duration::seconds(20), 10, "toto", None);
+        let streak_id = db_access.save_streak(&s, streak_id).await.unwrap();
+
         let query_result = sqlx::query("SELECT id from table_streak")
             .fetch_all(&mut pool.acquire().await.unwrap())
             .await
             .unwrap();
         assert_eq!(query_result.len(), 1);
+
         let read_streak_id: i64 = query_result.first().unwrap().try_get("id").unwrap();
         assert_eq!(read_streak_id, streak_id);
+
         let tmp_connection = &mut pool.acquire().await.unwrap();
         let query_join_table = sqlx::query("SELECT * from session_streak")
             .fetch_all(tmp_connection)
             .await
             .unwrap();
         assert_eq!(query_join_table.len(), 1);
+    }
+
+    #[tokio::test]
+    pub async fn test_read_streak() {
+        let (_temp_dir, pool) = create_tmp_db().await;
+        apply_migrations(&pool).await.unwrap();
+        let db_access = get_database_access(pool.acquire().await.unwrap());
     }
 }
