@@ -1,15 +1,10 @@
 use async_trait::async_trait;
-use sqlx::{
-    pool::PoolConnection,
-    query::{self, Query},
-    sqlite::SqliteArguments,
-    Sqlite,
-};
+use sqlx::{pool::PoolConnection, query::Query, sqlite::SqliteArguments, Sqlite};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::data::db_types::session_row::insert_streaks;
-use crate::data::db_types::{session_row, SessionRow, StreakRow};
+use crate::data::db_types::{SessionRow, StreakRow};
 use crate::data::Streak;
 
 use super::DatabaseAccess;
@@ -38,7 +33,7 @@ impl DatabaseAccess for SqliteDatabaseAccess {
                 .await;
         match res {
             Ok(r) => Ok(r.last_insert_rowid()),
-            Err(e) => Err(()),
+            Err(_) => Err(()),
         }
     }
     async fn save_streak(&self, streak: &Streak, session_id: i64) -> Result<i64, ()> {
@@ -54,14 +49,12 @@ impl DatabaseAccess for SqliteDatabaseAccess {
             .expect("Insertion in streak table failed")
             .last_insert_rowid();
 
-        let res = sqlx::query::<Sqlite>(
-            "INSERT INTO session_streak (session_id, streak_id) VALUES (?, ?)",
-        )
-        .bind(session_id)
-        .bind(streak_id)
-        .execute(&mut *conn)
-        .await
-        .expect("Insertion in join table failed");
+        sqlx::query::<Sqlite>("INSERT INTO session_streak (session_id, streak_id) VALUES (?, ?)")
+            .bind(session_id)
+            .bind(streak_id)
+            .execute(&mut *conn)
+            .await
+            .expect("Insertion in join table failed");
         Ok(streak_id)
     }
 
@@ -94,7 +87,7 @@ impl DatabaseAccess for SqliteDatabaseAccess {
                                                                          Err(_) => return Err(())
                                                                      };
 
-        session_row::insert_streaks(&mut session, streaks);
+        insert_streaks(&mut session, streaks);
         Ok(session)
     }
 }
@@ -104,6 +97,7 @@ pub mod tests {
     use sqlx::{sqlite, Row, SqlitePool};
     use tempfile::{tempdir, TempDir};
 
+    use crate::aggregator::session::Session;
     use crate::data::wrappers::{ProcessName, WebsiteName};
     use crate::database::init::apply_migrations;
 
@@ -144,7 +138,12 @@ pub mod tests {
             window_names: HashSet::default(),
         }
     }
-    pub fn build_some_session() -> Session {}
+    pub fn build_some_session(sample_interval: chrono::Duration) -> Session {
+        Session {
+            session_id: 0,
+            sample_interval,
+        }
+    }
 
     #[tokio::test]
     pub async fn test_save_streak() {
@@ -175,7 +174,33 @@ pub mod tests {
     #[tokio::test]
     pub async fn test_read_streak() {
         let (_temp_dir, pool) = create_tmp_db().await;
+        let sampling_interval = chrono::Duration::seconds(2);
         apply_migrations(&pool).await.unwrap();
         let db_access = get_database_access(pool.acquire().await.unwrap());
+        let session = build_some_session(sampling_interval);
+        let streak = build_some_streak(sampling_interval, 20, "tata", None);
+        let streak_id = db_access
+            .save_streak(&streak, session.session_id)
+            .await
+            .unwrap();
+
+        // Test
+        let read_streak = db_access.read_streak(streak_id).await.unwrap();
+
+        // Check output
+        assert_eq!(read_streak.id, streak_id);
+        assert_eq!(read_streak.process_name, streak.process_name);
+        assert_eq!(read_streak.website_name, streak.website_name);
+        assert_eq!(read_streak.duration, streak.duration);
+    }
+    #[tokio::test]
+    pub async fn test_create_session() {
+        let (_temp_dir, pool) = create_tmp_db().await;
+        let sampling_interval = chrono::Duration::seconds(2);
+        apply_migrations(&pool).await.unwrap();
+        let db_access = get_database_access(pool.acquire().await.unwrap());
+
+        let session_id = db_access.create_session(sampling_interval).await;
+        assert!(session_id.is_ok());
     }
 }

@@ -27,7 +27,6 @@ use default_config::QssMonitorConfig;
 use logging::initialization::initialize_subscriber;
 
 use aggregator::streak_extension_strategy::BrowserInclusiveStreakExtensionStrategy;
-use messages::QssMonitorMessage;
 
 use crate::core::Core;
 use data::website_detection::WebsiteNameDetector;
@@ -110,7 +109,7 @@ async fn main() {
     let sample_builder = build_sample_builder(read_config.non_productive_website.clone());
     let aggregator = aggregator::Aggregator::new(
         // TODO : Replace by config value
-        chrono::Duration::seconds(5),
+        read_config.polling_interval,
         Box::new(BrowserInclusiveStreakExtensionStrategy::new()),
         SqliteDatabaseAccess::new(aggregator_connection),
     );

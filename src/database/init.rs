@@ -1,7 +1,6 @@
-use sqlx::migrate::{MigrateDatabase, MigrateError, Migration};
+use sqlx::migrate::MigrateError;
 use sqlx::{migrate, Pool};
 use sqlx::{sqlite, Sqlite, SqlitePool};
-//use sqlx::P
 
 use crate::filesystem::paths;
 

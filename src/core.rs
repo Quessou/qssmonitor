@@ -5,7 +5,6 @@ use futures::StreamExt;
 use signal_hook::consts::signal::*;
 use signal_hook_tokio::Signals;
 use std::sync::Arc;
-use std::time::Duration;
 use tokio::{
     sync::mpsc::channel,
     sync::Mutex,
@@ -70,12 +69,12 @@ impl<DB: DatabaseAccess + std::fmt::Debug + std::marker::Sync + 'static> Core<DB
         let clone = self.clone();
         let sampling_task = task::spawn(async move {
             tracing::error!("log at the beginning of the async move block");
-            if let Err(_) = clone.aggregator.lock().await.start_session().await {
+            if clone.aggregator.lock().await.start_session().await.is_err() {
                 tracing::error!("Session creation in DB failed. Panicking.");
                 panic!();
             }
             // TODO : replace this by configuration sampling time
-            let mut interval = tokio::time::interval(Duration::new(1, 0));
+            let mut interval = tokio::time::interval(config.polling_interval.to_std().unwrap());
             // TODO : Replace this loop by a check on sampling_receiver
             while let Err(tokio::sync::mpsc::error::TryRecvError::Empty) =
                 sampling_receiver.try_recv()
@@ -112,7 +111,7 @@ impl<DB: DatabaseAccess + std::fmt::Debug + std::marker::Sync + 'static> Core<DB
 
         let signal_polling_task = task::spawn(async move {
             let mut signals =
-                Signals::new(&[SIGHUP, SIGTERM, SIGINT, SIGQUIT, SIGABRT, SIGTSTP]).unwrap();
+                Signals::new([SIGHUP, SIGTERM, SIGINT, SIGQUIT, SIGABRT, SIGTSTP]).unwrap();
             let handle = signals.handle();
             while let Some(signal) = signals.next().await {
                 match signal {
