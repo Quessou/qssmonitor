@@ -28,9 +28,7 @@ impl Default for NonProductiveWebsitesConfiguration {
         Self {
             non_productive_websites: vec![
                 (
-                    WebsiteName {
-                        data: "Instagram".to_owned(),
-                    },
+                    WebsiteName::new("Instagram".to_owned()),
                     vec![
                         Criteria::new(EndsWith, "· Direct"),
                         Criteria::new(EndsWith, "Instagram"),
@@ -39,9 +37,7 @@ impl Default for NonProductiveWebsitesConfiguration {
                 )
                     .into(),
                 (
-                    WebsiteName {
-                        data: "Twitter".to_owned(),
-                    },
+                    WebsiteName::new("Twitter".to_owned()),
                     vec![
                         Criteria::new(EndsWith, "/ Twitter"),
                         Criteria::new(EndsWith, "/ X"),
@@ -49,9 +45,7 @@ impl Default for NonProductiveWebsitesConfiguration {
                 )
                     .into(),
                 (
-                    WebsiteName {
-                        data: "Whatsapp".to_owned(),
-                    },
+                    WebsiteName::new("Whatsapp".to_owned()),
                     vec![
                         Criteria::new(EndsWith, "Whatsapp Web"),
                         Criteria::new(EndsWith, "Whatsapp"),
@@ -59,9 +53,7 @@ impl Default for NonProductiveWebsitesConfiguration {
                 )
                     .into(),
                 (
-                    WebsiteName {
-                        data: "Mediapart".to_owned(),
-                    },
+                    WebsiteName::new("Mediapart".to_owned()),
                     vec![
                         Criteria::new(Contains, "Mediapart"),
                         Criteria::new(EndsWith, "| Mediapart"),
@@ -69,89 +61,45 @@ impl Default for NonProductiveWebsitesConfiguration {
                 )
                     .into(),
                 (
-                    WebsiteName {
-                        data: "Linkedin".to_owned(),
-                    },
+                    WebsiteName::new("Linkedin".to_owned()),
                     vec![Criteria::new(EndsWith, "LinkedIn")],
                 )
                     .into(),
                 (
-                    WebsiteName {
-                        data: "Facebook".to_owned(),
-                    },
+                    "Facebook".to_owned(),
                     vec![Criteria::new(EndsWith, "Facebook")],
                 )
                     .into(),
                 (
-                    WebsiteName {
-                        data: "Netflix".to_owned(),
-                    },
+                    "Netflix".to_owned(),
                     vec![Criteria::new(EndsWith, "Netflix")],
                 )
                     .into(),
                 (
-                    WebsiteName {
-                        data: "Youtube".to_owned(),
-                    },
+                    "Youtube".to_owned(),
                     vec![Criteria::new(EndsWith, "YouTube")],
                 )
                     .into(),
                 (
-                    WebsiteName {
-                        data: "OkCupid".to_owned(),
-                    },
+                    "OkCupid".to_owned(),
                     vec![Criteria::new(EndsWith, "OkCupid")],
                 )
                     .into(),
+                ("Tinder".to_owned(), vec![Criteria::new(Contains, "Tinder")]).into(),
+                ("Gmail".to_owned(), vec![Criteria::new(EndsWith, "Gmail")]).into(),
                 (
-                    WebsiteName {
-                        data: "Tinder".to_owned(),
-                    },
-                    vec![Criteria::new(Contains, "Tinder")],
-                )
-                    .into(),
-                (
-                    WebsiteName {
-                        data: "Gmail".to_owned(),
-                    },
-                    vec![Criteria::new(EndsWith, "Gmail")],
-                )
-                    .into(),
-                (
-                    WebsiteName {
-                        data: "Scryfall".to_owned(),
-                    },
+                    "Scryfall".to_owned(),
                     vec![Criteria::new(Contains, "Scryfall")],
                 )
                     .into(),
+                ("EDHREC".to_owned(), vec![Criteria::new(EndsWith, "EDHREC")]).into(),
                 (
-                    WebsiteName {
-                        data: "EDHREC".to_owned(),
-                    },
-                    vec![Criteria::new(EndsWith, "EDHREC")],
-                )
-                    .into(),
-                (
-                    WebsiteName {
-                        data: "Moxfield".to_owned(),
-                    },
+                    "Moxfield".to_owned(),
                     vec![Criteria::new(Contains, "// Moxfield")],
                 )
                     .into(),
-                (
-                    WebsiteName {
-                        data: "Amazon".to_owned(),
-                    },
-                    vec![Criteria::new(Contains, "Amazon")],
-                )
-                    .into(),
-                (
-                    WebsiteName {
-                        data: "Twitch".to_owned(),
-                    },
-                    vec![Criteria::new(EndsWith, "Twitch")],
-                )
-                    .into(),
+                ("Amazon".to_owned(), vec![Criteria::new(Contains, "Amazon")]).into(),
+                ("Twitch".to_owned(), vec![Criteria::new(EndsWith, "Twitch")]).into(),
             ],
         }
     }

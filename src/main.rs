@@ -9,6 +9,7 @@ use config::File;
 mod aggregator;
 mod core;
 mod data;
+mod database;
 mod default_config;
 mod endpoints;
 mod filesystem;
@@ -20,13 +21,16 @@ mod x;
 use data::website_detection::DetectionData;
 
 use data::SampleBuilder;
+use database::init::apply_migrations;
+use database::SqliteDatabaseAccess;
 use default_config::QssMonitorConfig;
 use logging::initialization::initialize_subscriber;
 
-use crate::aggregator::streak_extension_strategy::BrowserInclusiveStreakExtensionStrategy;
+use aggregator::streak_extension_strategy::BrowserInclusiveStreakExtensionStrategy;
 
 use crate::core::Core;
-use crate::data::website_detection::WebsiteNameDetector;
+use data::website_detection::WebsiteNameDetector;
+use database::init::connect_to_database;
 
 fn build_website_name_detector(non_productive_websites: Vec<DetectionData>) -> WebsiteNameDetector {
     WebsiteNameDetector::new(non_productive_websites)
@@ -82,6 +86,8 @@ async fn main() {
         println!("Daemon mode !!");
     }
     */
+    //let config = QssMonitorConfig::default();
+    //println!("{}", toml::to_string(&config).unwrap());
     let args = get_args();
     let read_config = match get_config() {
         Ok(c) => c,
@@ -91,13 +97,22 @@ async fn main() {
         }
     };
 
+    let pool = connect_to_database().await;
+    let aggregator_connection = match pool.acquire().await {
+        Ok(c) => c,
+        Err(_) => {
+            tracing::error!("Could not connect to database");
+            panic!()
+        }
+    };
+    apply_migrations(&pool).await.unwrap();
     let sample_builder = build_sample_builder(read_config.non_productive_website.clone());
     let aggregator = aggregator::Aggregator::new(
         // TODO : Replace by config value
-        chrono::Duration::seconds(5),
+        read_config.polling_interval,
         Box::new(BrowserInclusiveStreakExtensionStrategy::new()),
+        SqliteDatabaseAccess::new(aggregator_connection),
     );
-
     let core = Core::new(sample_builder, aggregator);
     let router = endpoints::generate_api(core.clone()).await;
     core.run(read_config, args, Some(router)).await.unwrap();

@@ -1,6 +1,6 @@
 use crate::data::digest::ProductivityData;
-use crate::data::website_detection::{BrowserData};
-use crate::data::wrappers::{DurationWrapper};
+use crate::data::website_detection::BrowserData;
+use crate::data::wrappers::DurationWrapper;
 use crate::data::{Report, Streak};
 
 use super::ProductivityComputation;
@@ -68,7 +68,7 @@ impl ProductivityComputation for CompleteProductivityComputation {
 mod tests {
     use super::*;
     use crate::data::{
-        wrappers::{ProcessName, WindowName},
+        wrappers::{ProcessName, WebsiteName, WindowName},
         Sample,
     };
     use test_case::test_case;

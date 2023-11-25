@@ -1,5 +1,5 @@
 mod digest;
-mod streak;
+mod streak_object;
 
 pub use digest::StreakDigest;
-pub use streak::Streak;
+pub use streak_object::Streak;

@@ -5,9 +5,7 @@ use futures::StreamExt;
 use signal_hook::consts::signal::*;
 use signal_hook_tokio::Signals;
 use std::sync::Arc;
-use std::time::Duration;
 use tokio::{
-    io::{AsyncWrite, AsyncWriteExt},
     sync::mpsc::channel,
     sync::Mutex,
     task::{self},
@@ -21,18 +19,19 @@ use crate::{
         website_detection::{DetectionData, WebsiteNameDetector},
         Report, SampleBuilder,
     },
+    database::DatabaseAccess,
     default_config::QssMonitorConfig,
     messages::QssMonitorMessage,
     process, x,
 };
 
 #[derive(Clone, Debug)]
-pub struct Core {
+pub struct Core<DB: DatabaseAccess + std::fmt::Debug> {
     sample_builder: Arc<Mutex<SampleBuilder>>,
-    pub aggregator: Arc<Mutex<Aggregator>>,
+    pub aggregator: Arc<Mutex<Aggregator<DB>>>,
 }
 
-impl Core {
+impl<DB: DatabaseAccess + std::fmt::Debug + std::marker::Sync + 'static> Core<DB> {
     fn build_website_name_detector(
         non_productive_websites: Vec<DetectionData>,
     ) -> WebsiteNameDetector {
@@ -52,11 +51,10 @@ impl Core {
         self.aggregator.lock().await.get_report()
     }
 
-    pub fn new(sample_builder: SampleBuilder, aggregator: Aggregator) -> Self {
+    pub fn new(sample_builder: SampleBuilder, aggregator: Aggregator<DB>) -> Self {
         Core {
             sample_builder: Arc::new(Mutex::new(sample_builder)),
             aggregator: Arc::new(Mutex::new(aggregator)),
-            //router: None,
         }
     }
 
@@ -71,7 +69,12 @@ impl Core {
         let clone = self.clone();
         let sampling_task = task::spawn(async move {
             tracing::error!("log at the beginning of the async move block");
-            let mut interval = tokio::time::interval(Duration::new(1, 0));
+            if clone.aggregator.lock().await.start_session().await.is_err() {
+                tracing::error!("Session creation in DB failed. Panicking.");
+                panic!();
+            }
+            // TODO : replace this by configuration sampling time
+            let mut interval = tokio::time::interval(config.polling_interval.to_std().unwrap());
             // TODO : Replace this loop by a check on sampling_receiver
             while let Err(tokio::sync::mpsc::error::TryRecvError::Empty) =
                 sampling_receiver.try_recv()
@@ -86,15 +89,15 @@ impl Core {
                     .aggregator
                     .lock()
                     .await
-                    .register_sample(sample.unwrap());
+                    .register_sample(sample.unwrap())
+                    .await;
             }
-            println!("We stopped sampling !");
+            tracing::info!("Stopping sampling");
         })
         .instrument(tracing::error_span!("Sampling"));
 
         let (serving_sender, mut serving_receiver) = channel::<QssMonitorMessage>(5);
         let serving_task = task::spawn(async move {
-            // TODO : Do something about
             axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
                 .serve(router.unwrap().into_make_service())
                 .with_graceful_shutdown(async {
@@ -102,52 +105,41 @@ impl Core {
                 })
                 .await
                 .unwrap();
-            println!("Stopping webserver");
-            let file = tokio::fs::File::create("/home/maxime/tototo")
-                .await
-                .unwrap();
-            let mut writer = tokio::io::BufWriter::new(file);
-            writer.write_all("mdr".as_bytes()).await.unwrap();
-            writer.flush().await.unwrap();
+            tracing::info!("Stopping webserver");
         })
         .instrument(tracing::error_span!("Web server"));
 
         let signal_polling_task = task::spawn(async move {
             let mut signals =
-                Signals::new(&[SIGHUP, SIGTERM, SIGINT, SIGQUIT, SIGABRT, SIGTSTP]).unwrap();
+                Signals::new([SIGHUP, SIGTERM, SIGINT, SIGQUIT, SIGABRT, SIGTSTP]).unwrap();
             let handle = signals.handle();
             while let Some(signal) = signals.next().await {
                 match signal {
                     SIGTERM | SIGINT | SIGQUIT => {
-                        println!("BLBLBL");
                         sampling_sender.send(QssMonitorMessage::Stop).await.unwrap();
                         serving_sender.send(QssMonitorMessage::Stop).await.unwrap();
                         handle.close();
                     }
                     SIGHUP => {
-                        println!("SIGHUP !!");
                         sampling_sender.send(QssMonitorMessage::Stop).await.unwrap();
                         serving_sender.send(QssMonitorMessage::Stop).await.unwrap();
                         handle.close();
                     }
                     SIGABRT => {
-                        println!("SIGABRT !!");
                         sampling_sender.send(QssMonitorMessage::Stop).await.unwrap();
                         serving_sender.send(QssMonitorMessage::Stop).await.unwrap();
                         handle.close();
                     }
                     SIGTSTP => {
-                        println!("SIGTSTP !!");
                         sampling_sender.send(QssMonitorMessage::Stop).await.unwrap();
                         serving_sender.send(QssMonitorMessage::Stop).await.unwrap();
                         handle.close();
                     }
                     _ => {
-                        println!("Not a signal we care about")
+                        tracing::debug!("Not a signal we care about")
                     }
                 }
             }
-            println!("GNGNGNGN");
         });
 
         let _toto = futures::join!(sampling_task, serving_task, signal_polling_task);

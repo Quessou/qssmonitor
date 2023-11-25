@@ -58,10 +58,8 @@ impl Display for Sample {
             self.window_name.0,
             self.website_name
                 .as_ref()
-                .unwrap_or(&WebsiteName {
-                    data: "Productive I guess ?".to_owned()
-                })
-                .data,
+                .unwrap_or(&WebsiteName("Productive I guess ?".to_owned()))
+                .0,
             self.pid
         )
     }
