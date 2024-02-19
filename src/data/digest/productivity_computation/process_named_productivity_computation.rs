@@ -4,15 +4,27 @@ use crate::data::Report;
 
 use super::ProductivityComputation;
 
-#[derive(Default)]
-pub(crate) struct ProcessNamedProductivityComputation {}
+/// Way to compute productivity that only relies on the process name (the stuff that is returned by
+/// ps, basically). So it's kinda inaccurate since it does not take into consideration what we do
+/// in our browser, for instance.
+#[derive(Debug, Default, Clone)]
+pub(crate) struct ProcessNamedProductivityComputation {
+    non_productive_apps: Vec<String>,
+}
+
+unsafe impl std::marker::Send for ProcessNamedProductivityComputation {}
+unsafe impl std::marker::Sync for ProcessNamedProductivityComputation {}
+
+impl ProcessNamedProductivityComputation {
+    pub fn new(non_productive_apps: Vec<String>) -> Self {
+        Self {
+            non_productive_apps,
+        }
+    }
+}
 
 impl ProductivityComputation for ProcessNamedProductivityComputation {
-    fn compute_productivity(
-        &self,
-        report: &Report,
-        non_productive_apps: &[String],
-    ) -> ProductivityData {
+    fn compute_productivity(&self, report: &Report) -> ProductivityData {
         struct TmpProductivityData {
             pub total_time: chrono::Duration,
             pub productive_time: chrono::Duration,
@@ -27,7 +39,8 @@ impl ProductivityComputation for ProcessNamedProductivityComputation {
                 .iter()
                 .fold(&mut tmp_producivity_data, |acc, s| {
                     acc.total_time = acc.total_time + s.duration;
-                    if !non_productive_apps
+                    if !self
+                        .non_productive_apps
                         .iter()
                         .any(|a| s.process_name.0.contains(a))
                     {
@@ -78,8 +91,8 @@ pub mod tests {
     #[test]
     fn test_compute_productivity() {
         let report = build_dummy_report();
-        let computation = ProcessNamedProductivityComputation::default();
-        let prod_data = computation.compute_productivity(&report, &vec![] as &Vec<String>);
+        let computation = ProcessNamedProductivityComputation::new(vec!["to".to_owned()]);
+        let prod_data = computation.compute_productivity(&report);
         assert_eq!(
             prod_data.total_time,
             DurationWrapper {
@@ -89,7 +102,7 @@ pub mod tests {
         assert_eq!(
             prod_data.productive_time,
             DurationWrapper {
-                duration: chrono::Duration::seconds(50)
+                duration: chrono::Duration::seconds(20)
             }
         );
     }
@@ -97,9 +110,10 @@ pub mod tests {
     #[test]
     fn test_filter_nonproductive_time() {
         let report = build_dummy_report();
-        let computation = ProcessNamedProductivityComputation::default();
-        let prod_data =
-            computation.compute_productivity(&report, &vec!["to".to_owned()] as &Vec<String>);
+        let computation = ProcessNamedProductivityComputation {
+            non_productive_apps: vec!["to".to_owned()],
+        };
+        let prod_data = computation.compute_productivity(&report);
         assert_eq!(
             prod_data.total_time,
             DurationWrapper {

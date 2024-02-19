@@ -14,6 +14,7 @@ use tracing::{self, instrument, Instrument};
 
 use crate::{
     aggregator::Aggregator,
+    data::digest::{Builder as DigestBuilder, ProductivityComputation},
     data::{
         self,
         website_detection::{DetectionData, WebsiteNameDetector},
@@ -26,12 +27,20 @@ use crate::{
 };
 
 #[derive(Clone, Debug)]
-pub struct Core<DB: DatabaseAccess + std::fmt::Debug> {
+pub struct Core<
+    DB: DatabaseAccess + std::fmt::Debug,
+    Prod: ProductivityComputation + std::fmt::Debug,
+> {
     sample_builder: Arc<Mutex<SampleBuilder>>,
     pub aggregator: Arc<Mutex<Aggregator<DB>>>,
+    digest_builder: DigestBuilder<Prod>,
 }
 
-impl<DB: DatabaseAccess + std::fmt::Debug + std::marker::Sync + 'static> Core<DB> {
+impl<
+        DB: DatabaseAccess + std::fmt::Debug + std::marker::Sync + 'static,
+        PC: ProductivityComputation + std::fmt::Debug,
+    > Core<DB, PC>
+{
     fn build_website_name_detector(
         non_productive_websites: Vec<DetectionData>,
     ) -> WebsiteNameDetector {
@@ -48,13 +57,18 @@ impl<DB: DatabaseAccess + std::fmt::Debug + std::marker::Sync + 'static> Core<DB
     }
 
     async fn get_last_report(&self) -> Report {
-        self.aggregator.lock().await.get_report()
+        self.aggregator.lock().await.get_current_report()
     }
 
-    pub fn new(sample_builder: SampleBuilder, aggregator: Aggregator<DB>) -> Self {
+    pub fn new(
+        sample_builder: SampleBuilder,
+        aggregator: Aggregator<DB>,
+        digest_builder: DigestBuilder<PC>,
+    ) -> Self {
         Core {
             sample_builder: Arc::new(Mutex::new(sample_builder)),
             aggregator: Arc::new(Mutex::new(aggregator)),
+            digest_builder: Arc::new(Mutex::new(digest_builder)),
         }
     }
 

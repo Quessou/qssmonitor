@@ -3,6 +3,7 @@ use super::Digest;
 use crate::data::report::Report;
 use crate::data::wrappers::website_name::WebsiteName;
 
+#[derive(Debug, Clone)]
 pub struct Builder<Prod>
 where
     Prod: ProductivityComputation,
@@ -25,9 +26,7 @@ where
     }
 
     pub fn build_digest(&self, report: Report) -> Digest {
-        let productivity_data = self
-            .productivity_computation
-            .compute_productivity(&report, &self.unproductive_apps);
+        let productivity_data = self.productivity_computation.compute_productivity(&report); //, &self.unproductive_apps);
         let mut digest: Digest = report.try_into().unwrap();
 
         digest.productivity_data = Some(productivity_data);

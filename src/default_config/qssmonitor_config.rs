@@ -9,7 +9,7 @@ use super::NonProductiveWebsitesConfiguration;
 pub struct QssMonitorConfig {
     #[serde_as(as = "serde_with::DurationSeconds<i64>")]
     pub polling_interval: chrono::Duration,
-    non_productive_apps: Vec<String>,
+    pub non_productive_apps: Vec<String>,
     pub non_productive_website: Vec<DetectionData>,
 }
 

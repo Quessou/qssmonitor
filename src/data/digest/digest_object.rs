@@ -8,6 +8,8 @@ use crate::data::Streak;
 
 use crate::data::report::Report;
 
+use super::productivity_computation::ProductivityComputation;
+use super::productivity_data;
 use super::ProductivityData;
 
 /// Compilation of data (*with processings, so there is some data loss*) that can be requested from
