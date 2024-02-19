@@ -19,8 +19,10 @@ mod process;
 mod x;
 
 use data::digest;
+use data::digest::CompleteProductivityComputation;
 use data::website_detection::DetectionData;
 
+use data::website_detection::build_browser_data_list;
 use data::SampleBuilder;
 use database::init::apply_migrations;
 use database::SqliteDatabaseAccess;
@@ -100,8 +102,12 @@ async fn main() {
         SqliteDatabaseAccess::new(aggregator_db_connection),
     );
     let digest_builder = digest::Builder::new(
-        read_config.non_productive_apps.clone(),
-        read_config.non_productive_website.clone(),
+        CompleteProductivityComputation::new(
+            build_browser_data_list(),
+            read_config.non_productive_apps.clone(),
+        ), /*
+           read_config.non_productive_apps.clone(),
+           read_config.non_productive_website.clone(),*/
     );
     let core = Core::new(sample_builder, aggregator, digest_builder);
     let router = endpoints::generate_api(core.clone()).await;

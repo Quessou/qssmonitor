@@ -5,9 +5,10 @@ use crate::data::Report;
 
 use super::ProductivityData;
 
+pub use complete_productivity_computation::CompleteProductivityComputation;
+
 pub trait ProductivityComputation:
     Default + Clone + std::fmt::Debug + std::marker::Sync + std::marker::Send
-//+ std::marker::Send + std::marker::Sync
 {
     fn compute_productivity(&self, report: &Report) -> ProductivityData;
 }

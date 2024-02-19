@@ -8,7 +8,7 @@ use super::ProductivityComputation;
 /// Productivity computation that takes into consideration the processes and the current tab of
 /// your browser (as best as it can, actually)
 #[derive(Debug, Default, Clone)]
-struct CompleteProductivityComputation {
+pub struct CompleteProductivityComputation {
     browsers_data: Vec<BrowserData>,
     non_productive_apps: Vec<String>,
 }
@@ -37,7 +37,8 @@ impl ProductivityComputation for CompleteProductivityComputation {
                 .any(|&n| streak.process_name.0.contains(n))
             {
                 // Since we only specify the non-productive websites, if we don't have any website
-                // name, we'll assume it's a productive website
+                // name, we'll assume it's a productive website since we cannot list all websites
+                // in the world.
                 if streak.website_name.as_ref().is_none() {
                     return streak.duration;
                 }

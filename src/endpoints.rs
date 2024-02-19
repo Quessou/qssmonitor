@@ -21,7 +21,7 @@ pub async fn get_last_digest<DB: DatabaseAccess + std::fmt::Debug, PC: Productiv
 
 pub async fn generate_api<
     DB: DatabaseAccess + std::fmt::Debug + 'static,
-    PC: ProductivityComputation, //+ std::marker::Send + std::marker::Sync,
+    PC: ProductivityComputation + 'static,
 >(
     core: Core<DB, PC>,
 ) -> Router {

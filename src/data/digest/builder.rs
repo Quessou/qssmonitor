@@ -1,6 +1,7 @@
-use super::productivity_computation::ProductivityComputation;
+use super::productivity_computation::{self, ProductivityComputation};
 use super::Digest;
 use crate::data::report::Report;
+use crate::data::website_detection::DetectionData;
 use crate::data::wrappers::website_name::WebsiteName;
 
 #[derive(Debug, Clone)]
@@ -9,19 +10,17 @@ where
     Prod: ProductivityComputation,
 {
     productivity_computation: Prod,
-    unproductive_apps: Vec<String>,
-    unproductive_websites: Vec<WebsiteName>,
 }
 
 impl<Prod> Builder<Prod>
 where
     Prod: ProductivityComputation,
 {
-    pub fn new(unproductive_apps: Vec<String>, unproductive_websites: Vec<WebsiteName>) -> Self {
+    pub fn new(productivity_computation: Prod) -> Self {
+        //unproductive_apps: Vec<String>, unproductive_websites: Vec<DetectionData>) -> Self {
         Builder {
-            productivity_computation: Prod::default(),
-            unproductive_apps,
-            unproductive_websites,
+            productivity_computation, //      unproductive_apps,
+                                      //       unproductive_websites,
         }
     }
 

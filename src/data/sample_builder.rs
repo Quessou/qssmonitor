@@ -26,6 +26,7 @@ impl SampleBuilder {
     pub async fn build_sample(&self) -> Option<Sample> {
         let window = self.xdo_requester.get_active_window().await;
         if window == 0 {
+            tracing::warn!("Could not get active window");
             return None;
         }
         let window_name = self.xdo_requester.get_window_name(window).await;

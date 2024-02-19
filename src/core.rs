@@ -33,12 +33,12 @@ pub struct Core<
 > {
     sample_builder: Arc<Mutex<SampleBuilder>>,
     pub aggregator: Arc<Mutex<Aggregator<DB>>>,
-    digest_builder: DigestBuilder<Prod>,
+    digest_builder: Arc<Mutex<DigestBuilder<Prod>>>,
 }
 
 impl<
         DB: DatabaseAccess + std::fmt::Debug + std::marker::Sync + 'static,
-        PC: ProductivityComputation + std::fmt::Debug,
+        PC: ProductivityComputation + std::fmt::Debug + 'static,
     > Core<DB, PC>
 {
     fn build_website_name_detector(
