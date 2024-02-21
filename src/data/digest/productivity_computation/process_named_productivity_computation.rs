@@ -16,6 +16,7 @@ unsafe impl std::marker::Send for ProcessNamedProductivityComputation {}
 unsafe impl std::marker::Sync for ProcessNamedProductivityComputation {}
 
 impl ProcessNamedProductivityComputation {
+    #[allow(dead_code)]
     pub fn new(non_productive_apps: Vec<String>) -> Self {
         Self {
             non_productive_apps,

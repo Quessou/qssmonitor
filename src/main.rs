@@ -20,10 +20,9 @@ mod x;
 
 use data::digest;
 use data::digest::CompleteProductivityComputation;
-use data::website_detection::DetectionData;
+//use data::website_detection::DetectionData;
 
 use data::website_detection::build_browser_data_list;
-use data::SampleBuilder;
 use database::init::apply_migrations;
 use database::SqliteDatabaseAccess;
 use default_config::QssMonitorConfig;
@@ -32,13 +31,16 @@ use logging::initialization::initialize_subscriber;
 use aggregator::streak_extension_strategy::BrowserInclusiveStreakExtensionStrategy;
 
 use crate::core::Core;
-use data::website_detection::WebsiteNameDetector;
+//use data::website_detection::WebsiteNameDetector;
 use database::init::connect_to_database;
 
+/*
 fn build_website_name_detector(non_productive_websites: Vec<DetectionData>) -> WebsiteNameDetector {
     WebsiteNameDetector::new(non_productive_websites)
 }
+*/
 
+/*
 fn build_sample_builder(non_productive_websites: Vec<DetectionData>) -> SampleBuilder {
     let website_name_detector = build_website_name_detector(non_productive_websites);
     data::SampleBuilder::new(
@@ -47,6 +49,7 @@ fn build_sample_builder(non_productive_websites: Vec<DetectionData>) -> SampleBu
         website_name_detector,
     )
 }
+*/
 
 fn get_config() -> Result<QssMonitorConfig, Box<dyn Error>> {
     let config_file = File::with_name(filesystem::paths::get_config_file_path().to_str().unwrap());
@@ -95,20 +98,16 @@ async fn main() {
         }
     };
     apply_migrations(&pool).await.unwrap();
-    let sample_builder = build_sample_builder(read_config.non_productive_website.clone());
+    let sample_builder = data::build_sample_builder(read_config.non_productive_website.clone());
     let aggregator = aggregator::Aggregator::new(
         read_config.polling_interval,
         Box::new(BrowserInclusiveStreakExtensionStrategy::new()),
         SqliteDatabaseAccess::new(aggregator_db_connection),
     );
-    let digest_builder = digest::Builder::new(
-        CompleteProductivityComputation::new(
-            build_browser_data_list(),
-            read_config.non_productive_apps.clone(),
-        ), /*
-           read_config.non_productive_apps.clone(),
-           read_config.non_productive_website.clone(),*/
-    );
+    let digest_builder = digest::Builder::new(CompleteProductivityComputation::new(
+        build_browser_data_list(),
+        read_config.non_productive_apps.clone(),
+    ));
     let core = Core::new(sample_builder, aggregator, digest_builder);
     let router = endpoints::generate_api(core.clone()).await;
     core.run(read_config, args, Some(router)).await.unwrap();

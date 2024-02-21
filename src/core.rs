@@ -15,15 +15,10 @@ use tracing::{self, instrument, Instrument};
 use crate::{
     aggregator::Aggregator,
     data::digest::{Builder as DigestBuilder, ProductivityComputation},
-    data::{
-        self,
-        website_detection::{DetectionData, WebsiteNameDetector},
-        Report, SampleBuilder,
-    },
+    data::{Report, SampleBuilder},
     database::DatabaseAccess,
     default_config::QssMonitorConfig,
     messages::QssMonitorMessage,
-    process, x,
 };
 
 #[derive(Clone, Debug)]
@@ -33,7 +28,7 @@ pub struct Core<
 > {
     sample_builder: Arc<Mutex<SampleBuilder>>,
     pub aggregator: Arc<Mutex<Aggregator<DB>>>,
-    digest_builder: Arc<Mutex<DigestBuilder<Prod>>>,
+    pub digest_builder: Arc<Mutex<DigestBuilder<Prod>>>,
 }
 
 impl<
@@ -41,22 +36,23 @@ impl<
         PC: ProductivityComputation + std::fmt::Debug + 'static,
     > Core<DB, PC>
 {
-    fn build_website_name_detector(
-        non_productive_websites: Vec<DetectionData>,
-    ) -> WebsiteNameDetector {
-        WebsiteNameDetector::new(non_productive_websites)
-    }
+    /*
+        fn build_website_name_detector(
+            non_productive_websites: Vec<DetectionData>,
+        ) -> WebsiteNameDetector {
+            WebsiteNameDetector::new(non_productive_websites)
+        }
 
-    fn build_sample_builder(non_productive_websites: Vec<DetectionData>) -> SampleBuilder {
-        let website_name_detector = Self::build_website_name_detector(non_productive_websites);
-        data::SampleBuilder::new(
-            x::Requester::default(),
-            process::Requester::default(),
-            website_name_detector,
-        )
-    }
-
-    async fn get_last_report(&self) -> Report {
+        fn build_sample_builder(non_productive_websites: Vec<DetectionData>) -> SampleBuilder {
+            let website_name_detector = Self::build_website_name_detector(non_productive_websites);
+            data::SampleBuilder::new(
+                x::Requester::default(),
+                process::Requester::default(),
+                website_name_detector,
+            )
+        }
+    */
+    pub async fn get_last_report(&self) -> Report {
         self.aggregator.lock().await.get_current_report()
     }
 

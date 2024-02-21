@@ -1,8 +1,8 @@
-use super::productivity_computation::{self, ProductivityComputation};
+use super::productivity_computation::{ProductivityComputation};
 use super::Digest;
 use crate::data::report::Report;
-use crate::data::website_detection::DetectionData;
-use crate::data::wrappers::website_name::WebsiteName;
+
+
 
 #[derive(Debug, Clone)]
 pub struct Builder<Prod>
