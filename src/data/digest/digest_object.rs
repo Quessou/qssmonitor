@@ -20,6 +20,7 @@ pub struct Digest {
     pub time_by_process: Vec<(ProcessName, DurationWrapper)>,
     pub streak_data: Vec<StreakDigest>,
     pub productivity_data: Option<ProductivityData>,
+    pub longest_streaks: Vec<Streak>,
 }
 
 fn group_streaks_by_process_name(streaks: &[Streak]) -> Vec<Vec<&Streak>> {
@@ -59,7 +60,7 @@ fn aggregate_durations(grouped_streaks: &[Vec<&Streak>]) -> Vec<(ProcessName, Du
         .collect()
 }
 
-fn get_time_by_process(streaks: &[Streak]) -> Vec<(ProcessName, DurationWrapper)> {
+pub fn get_time_by_process(streaks: &[Streak]) -> Vec<(ProcessName, DurationWrapper)> {
     let grouped_streaks = group_streaks_by_process_name(streaks);
 
     aggregate_durations(&grouped_streaks)
@@ -75,19 +76,22 @@ impl TryFrom<Report> for Digest {
 
         let (begin_date, end_date) = get_begin_and_end_dates(&report);
         let grouped_streaks = group_streaks_by_process_name(&report.streaks);
-        let time_by_process = aggregate_durations(&grouped_streaks);
+        let time_by_process = get_time_by_process(&report.streaks);
         let streak_data: Vec<StreakDigest> = grouped_streaks
             .into_iter()
             .map(StreakDigest::from)
             .collect();
+        let longest_streaks = report
+            .get_longest_streaks()
+            .expect("No streak in the report");
 
-        // Return value
         Ok(Digest {
             begin_date,
             end_date,
             time_by_process,
             streak_data,
             productivity_data: None,
+            longest_streaks,
         })
     }
 }

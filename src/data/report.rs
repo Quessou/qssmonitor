@@ -24,6 +24,22 @@ impl Report {
             samples_count,
         }
     }
+
+    /// Returns the longest streaks of the report
+    pub fn get_longest_streaks(&self) -> Option<Vec<Streak>> {
+        if self.streaks.is_empty() {
+            return None;
+        }
+        let max_duration = self.streaks.iter().map(|s| s.duration).max().unwrap();
+        let longest_streaks = self
+            .streaks
+            .iter()
+            .filter(|s| s.duration == max_duration)
+            .cloned()
+            .collect::<Vec<Streak>>();
+        assert!(!longest_streaks.is_empty());
+        Some(longest_streaks)
+    }
 }
 
 impl std::string::ToString for Report {

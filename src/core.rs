@@ -14,47 +14,41 @@ use tracing::{self, instrument, Instrument};
 
 use crate::{
     aggregator::Aggregator,
-    data::{
-        self,
-        website_detection::{DetectionData, WebsiteNameDetector},
-        Report, SampleBuilder,
-    },
+    data::digest::{Builder as DigestBuilder, ProductivityComputation},
+    data::{Report, SampleBuilder},
     database::DatabaseAccess,
     default_config::QssMonitorConfig,
     messages::QssMonitorMessage,
-    process, x,
 };
 
 #[derive(Clone, Debug)]
-pub struct Core<DB: DatabaseAccess + std::fmt::Debug> {
+pub struct Core<
+    DB: DatabaseAccess + std::fmt::Debug,
+    Prod: ProductivityComputation + std::fmt::Debug,
+> {
     sample_builder: Arc<Mutex<SampleBuilder>>,
     pub aggregator: Arc<Mutex<Aggregator<DB>>>,
+    pub digest_builder: Arc<Mutex<DigestBuilder<Prod>>>,
 }
 
-impl<DB: DatabaseAccess + std::fmt::Debug + std::marker::Sync + 'static> Core<DB> {
-    fn build_website_name_detector(
-        non_productive_websites: Vec<DetectionData>,
-    ) -> WebsiteNameDetector {
-        WebsiteNameDetector::new(non_productive_websites)
+impl<
+        DB: DatabaseAccess + std::fmt::Debug + std::marker::Sync + 'static,
+        PC: ProductivityComputation + std::fmt::Debug + 'static,
+    > Core<DB, PC>
+{
+    pub async fn get_last_report(&self) -> Report {
+        self.aggregator.lock().await.get_current_report()
     }
 
-    fn build_sample_builder(non_productive_websites: Vec<DetectionData>) -> SampleBuilder {
-        let website_name_detector = Self::build_website_name_detector(non_productive_websites);
-        data::SampleBuilder::new(
-            x::Requester::default(),
-            process::Requester::default(),
-            website_name_detector,
-        )
-    }
-
-    async fn get_last_report(&self) -> Report {
-        self.aggregator.lock().await.get_report()
-    }
-
-    pub fn new(sample_builder: SampleBuilder, aggregator: Aggregator<DB>) -> Self {
+    pub fn new(
+        sample_builder: SampleBuilder,
+        aggregator: Aggregator<DB>,
+        digest_builder: DigestBuilder<PC>,
+    ) -> Self {
         Core {
             sample_builder: Arc::new(Mutex::new(sample_builder)),
             aggregator: Arc::new(Mutex::new(aggregator)),
+            digest_builder: Arc::new(Mutex::new(digest_builder)),
         }
     }
 

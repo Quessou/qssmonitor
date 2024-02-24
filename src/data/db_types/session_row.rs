@@ -3,8 +3,8 @@ use chrono::Duration;
 use sqlx::{sqlite::SqliteRow, FromRow, Row};
 
 pub struct SessionRow {
-    id: i64,
-    interval: Duration,
+    _id: i64,
+    _interval: Duration,
     pub(super) streaks: Vec<StreakRow>,
 }
 
@@ -15,8 +15,8 @@ impl FromRow<'_, SqliteRow> for SessionRow {
             chrono::Duration::seconds(row.try_get::<i64, &str>("sample_interval_s").unwrap());
 
         Ok(SessionRow {
-            id,
-            interval,
+            _id: id,
+            _interval: interval,
             streaks: vec![],
         })
     }

@@ -5,23 +5,27 @@ use crate::data::{Report, Streak};
 
 use super::ProductivityComputation;
 
-#[derive(Default)]
-struct CompleteProductivityComputation {
+/// Productivity computation that takes into consideration the processes and the current tab of
+/// your browser (as best as it can, actually)
+#[derive(Debug, Default, Clone)]
+pub struct CompleteProductivityComputation {
     browsers_data: Vec<BrowserData>,
+    non_productive_apps: Vec<String>,
 }
+unsafe impl std::marker::Send for CompleteProductivityComputation {}
+unsafe impl std::marker::Sync for CompleteProductivityComputation {}
 
 impl CompleteProductivityComputation {
-    pub fn new(browsers_data: Vec<BrowserData>) -> Self {
-        Self { browsers_data }
+    pub fn new(browsers_data: Vec<BrowserData>, non_productive_apps: Vec<String>) -> Self {
+        Self {
+            browsers_data,
+            non_productive_apps,
+        }
     }
 }
 
 impl ProductivityComputation for CompleteProductivityComputation {
-    fn compute_productivity(
-        &self,
-        report: &Report,
-        non_productive_apps: &[String],
-    ) -> ProductivityData {
+    fn compute_productivity(&self, report: &Report) -> ProductivityData {
         let browsers_names = self
             .browsers_data
             .iter()
@@ -32,10 +36,14 @@ impl ProductivityComputation for CompleteProductivityComputation {
                 .iter()
                 .any(|&n| streak.process_name.0.contains(n))
             {
+                // Since we only specify the non-productive websites, if we don't have any website
+                // name, we'll assume it's a productive website since we cannot list all websites
+                // in the world.
                 if streak.website_name.as_ref().is_none() {
                     return streak.duration;
                 }
-            } else if !non_productive_apps
+            } else if !self
+                .non_productive_apps
                 .iter()
                 .any(|a| streak.process_name.0.contains(a))
             {
@@ -98,12 +106,15 @@ mod tests {
              chrono::Duration::seconds(5)).into(),(vec![build_sample("tutu", "toto", "", 10), build_sample("tutu", "toto", "mdr", 10)], 
              chrono::Duration::seconds(5)).into()], chrono::Duration::seconds(5), 2 as u32) => chrono::Duration::seconds(10) )]
     fn test_compute_productivity(report: Report) -> chrono::Duration {
-        let computation = CompleteProductivityComputation::new(vec![BrowserData {
-            browser_name: "toto".to_owned(),
-            window_name_suffix: "".to_owned(),
-        }]);
+        let computation = CompleteProductivityComputation::new(
+            vec![BrowserData {
+                browser_name: "toto".to_owned(),
+                window_name_suffix: "".to_owned(),
+            }],
+            vec![],
+        );
         computation
-            .compute_productivity(&report, &vec![])
+            .compute_productivity(&report)
             .productive_time
             .duration
     }

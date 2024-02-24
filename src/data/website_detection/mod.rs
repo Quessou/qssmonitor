@@ -50,3 +50,9 @@ pub fn build_browser_data_list() -> Vec<BrowserData> {
         BrowserData::new("chromium".to_owned(), "TODO".to_owned()),
     ]
 }
+
+pub fn build_website_name_detector(
+    non_productive_websites: Vec<DetectionData>,
+) -> WebsiteNameDetector {
+    WebsiteNameDetector::new(non_productive_websites)
+}
