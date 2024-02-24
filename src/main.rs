@@ -20,7 +20,6 @@ mod x;
 
 use data::digest;
 use data::digest::CompleteProductivityComputation;
-//use data::website_detection::DetectionData;
 
 use data::website_detection::build_browser_data_list;
 use database::init::apply_migrations;
@@ -31,25 +30,7 @@ use logging::initialization::initialize_subscriber;
 use aggregator::streak_extension_strategy::BrowserInclusiveStreakExtensionStrategy;
 
 use crate::core::Core;
-//use data::website_detection::WebsiteNameDetector;
 use database::init::connect_to_database;
-
-/*
-fn build_website_name_detector(non_productive_websites: Vec<DetectionData>) -> WebsiteNameDetector {
-    WebsiteNameDetector::new(non_productive_websites)
-}
-*/
-
-/*
-fn build_sample_builder(non_productive_websites: Vec<DetectionData>) -> SampleBuilder {
-    let website_name_detector = build_website_name_detector(non_productive_websites);
-    data::SampleBuilder::new(
-        x::Requester::default(),
-        process::Requester::default(),
-        website_name_detector,
-    )
-}
-*/
 
 fn get_config() -> Result<QssMonitorConfig, Box<dyn Error>> {
     let config_file = File::with_name(filesystem::paths::get_config_file_path().to_str().unwrap());
