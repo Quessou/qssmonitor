@@ -38,3 +38,52 @@ impl From<Vec<&Streak>> for StreakDigest {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{collections::HashSet, time::Duration};
+
+    use chrono::DateTime;
+
+    use super::*;
+    fn build_streak_vec() -> Vec<Streak> {
+        vec![
+            Streak {
+                pid: 10,
+                process_name: "Toto".to_owned().into(),
+                window_names: HashSet::default(),
+                website_name: None,
+                duration: chrono::Duration::seconds(20),
+                begin_date: DateTime::default(),
+            },
+            Streak {
+                pid: 10,
+                process_name: "Toto".to_owned().into(),
+                window_names: HashSet::default(),
+                website_name: None,
+                duration: chrono::Duration::seconds(30),
+                begin_date: DateTime::default(),
+            },
+            Streak {
+                pid: 10,
+                process_name: "Toto".to_owned().into(),
+                window_names: HashSet::default(),
+                website_name: None,
+                duration: chrono::Duration::seconds(100),
+                begin_date: DateTime::default(),
+            },
+        ]
+    }
+
+    #[test]
+    fn test_build_streak_digest() {
+        let streaks = build_streak_vec();
+        let digest: StreakDigest = streaks.iter().map(|s| s).collect::<Vec<&Streak>>().into();
+        assert_eq!(
+            digest.average_streak_duration,
+            DurationWrapper {
+                duration: chrono::Duration::seconds(50)
+            }
+        )
+    }
+}
