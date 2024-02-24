@@ -36,22 +36,6 @@ impl<
         PC: ProductivityComputation + std::fmt::Debug + 'static,
     > Core<DB, PC>
 {
-    /*
-        fn build_website_name_detector(
-            non_productive_websites: Vec<DetectionData>,
-        ) -> WebsiteNameDetector {
-            WebsiteNameDetector::new(non_productive_websites)
-        }
-
-        fn build_sample_builder(non_productive_websites: Vec<DetectionData>) -> SampleBuilder {
-            let website_name_detector = Self::build_website_name_detector(non_productive_websites);
-            data::SampleBuilder::new(
-                x::Requester::default(),
-                process::Requester::default(),
-                website_name_detector,
-            )
-        }
-    */
     pub async fn get_last_report(&self) -> Report {
         self.aggregator.lock().await.get_current_report()
     }

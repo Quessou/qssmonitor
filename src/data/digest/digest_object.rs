@@ -85,7 +85,6 @@ impl TryFrom<Report> for Digest {
             .get_longest_streaks()
             .expect("No streak in the report");
 
-        // Return value
         Ok(Digest {
             begin_date,
             end_date,
