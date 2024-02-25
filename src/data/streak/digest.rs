@@ -46,7 +46,7 @@ mod tests {
     use chrono::DateTime;
 
     use super::*;
-    fn build_streak_vec() -> Vec<Streak> {
+    fn build_simple_streak_vec() -> Vec<Streak> {
         vec![
             Streak {
                 pid: 10,
@@ -77,13 +77,19 @@ mod tests {
 
     #[test]
     fn test_build_streak_digest() {
-        let streaks = build_streak_vec();
+        let streaks = build_simple_streak_vec();
         let digest: StreakDigest = streaks.iter().map(|s| s).collect::<Vec<&Streak>>().into();
         assert_eq!(
             digest.average_streak_duration,
             DurationWrapper {
                 duration: chrono::Duration::seconds(50)
             }
-        )
+        );
+        assert_eq!(
+            digest.longest_streak_duration,
+            DurationWrapper {
+                duration: chrono::Duration::seconds(100)
+            }
+        );
     }
 }

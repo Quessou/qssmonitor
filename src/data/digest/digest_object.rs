@@ -25,7 +25,12 @@ pub struct Digest {
 
 fn group_streaks_by_process_name(streaks: &[Streak]) -> Vec<Vec<&Streak>> {
     let mut grouped_streaks: Vec<Vec<&Streak>> = vec![];
-    for (_, group) in &streaks.iter().group_by(|s| &s.process_name) {
+    let sorted_streaks: Vec<&Streak> = streaks
+        .iter()
+        .map(|s| s)
+        .sorted_by(|s1, s2| s1.process_name.cmp(&s2.process_name))
+        .collect();
+    for (_, group) in &sorted_streaks.into_iter().group_by(|s| &s.process_name) {
         grouped_streaks.push(group.collect());
     }
     grouped_streaks
@@ -121,8 +126,8 @@ mod tests {
         vec![
             build_streak(&process_name_1, 20),
             build_streak(&process_name_1, 30),
-            build_streak(&process_name_1, 10),
             build_streak(&process_name_2, 20),
+            build_streak(&process_name_1, 10),
             build_streak(&process_name_2, 30),
             build_streak(&process_name_2, 40),
             build_streak(&process_name_2, 100),
@@ -134,8 +139,8 @@ mod tests {
         let streak_list = build_streak_list();
         let groups = group_streaks_by_process_name(&streak_list);
         assert_eq!(groups.len(), 2);
-        assert_eq!(groups[0].len(), 3);
-        assert_eq!(groups[1].len(), 4);
+        assert_eq!(groups[1].len(), 3);
+        assert_eq!(groups[0].len(), 4);
     }
 
     #[test]
@@ -143,7 +148,7 @@ mod tests {
         let streak_list = build_streak_list();
         let durations = get_time_by_process(&streak_list);
         assert_eq!(
-            durations[0],
+            durations[1],
             (
                 ProcessName::from(String::from("Toto")),
                 DurationWrapper {
@@ -152,7 +157,7 @@ mod tests {
             )
         );
         assert_eq!(
-            durations[1],
+            durations[0],
             (
                 ProcessName::from(String::from("Tata")),
                 DurationWrapper {
