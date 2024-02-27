@@ -13,7 +13,7 @@ use super::ProductivityData;
 /// Compilation of data (*with processings, so there is some data loss*) that can be requested from
 /// an outside client
 #[serde_with::serde_as]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Digest {
     pub begin_date: chrono::DateTime<chrono::Local>,
     pub end_date: chrono::DateTime<chrono::Local>,
@@ -71,6 +71,17 @@ pub fn get_time_by_process(streaks: &[Streak]) -> Vec<(ProcessName, DurationWrap
     aggregate_durations(&grouped_streaks)
 }
 
+impl PartialEq for Digest {
+    fn eq(&self, other: &Self) -> bool {
+        self.begin_date == other.begin_date
+            && self.end_date == other.end_date
+            && self.time_by_process == other.time_by_process
+            && self.streak_data == other.streak_data
+            && self.productivity_data == other.productivity_data
+            && self.longest_streaks == other.longest_streaks
+    }
+}
+
 impl TryFrom<Report> for Digest {
     type Error = ();
 
@@ -106,8 +117,10 @@ mod tests {
 
     use std::collections::HashSet;
 
+    use chrono::DateTime;
+
     use super::*;
-    use crate::data::wrappers::ProcessName;
+    use crate::data::wrappers::{ProcessName, WindowName};
 
     fn build_streak(process_name: &str, duration: i64) -> Streak {
         // Let's say we dont care about the other parameters
@@ -165,5 +178,44 @@ mod tests {
                 }
             )
         );
+    }
+
+    #[test]
+    fn test_serialize_deserialize_digest() {
+        let now = chrono::Local::now();
+        let digest = Digest {
+            begin_date: now,
+            end_date: now + chrono::Duration::seconds(20),
+            time_by_process: vec![(
+                ProcessName {
+                    0: "toto".to_owned(),
+                },
+                20.into(),
+            )],
+            streak_data: vec![vec![&Streak {
+                pid: 10,
+                process_name: ProcessName {
+                    0: "toto".to_owned(),
+                },
+                window_names: vec![WindowName {
+                    0: "Toto".to_owned(),
+                }]
+                .into_iter()
+                .collect::<HashSet<_>>(),
+                website_name: None,
+                duration: chrono::Duration::seconds(30),
+                begin_date: now,
+            }]
+            .into()],
+            productivity_data: Some(ProductivityData {
+                total_time: 30.into(),
+                productive_time: 30.into(),
+            }),
+            longest_streaks: vec![],
+        };
+        let json_digest = serde_json::to_string(&digest).expect("Serialization failed");
+        let deserialized_digest: Digest =
+            serde_json::from_str(&json_digest).expect("Deserialization failed");
+        assert_eq!(digest, deserialized_digest);
     }
 }

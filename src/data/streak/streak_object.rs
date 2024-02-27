@@ -9,7 +9,7 @@ use crate::data::Sample;
 
 /// Set of samples that are contiguous in time, without the focus of the main window being changed
 #[serde_as]
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Streak {
     pub pid: i32,
     pub process_name: ProcessName,

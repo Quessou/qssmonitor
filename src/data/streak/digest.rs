@@ -6,7 +6,7 @@ use crate::data::wrappers::DurationWrapper;
 
 use crate::data::wrappers::ProcessName;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct StreakDigest {
     pub process_name: ProcessName,
     pub longest_streak_duration: DurationWrapper,
