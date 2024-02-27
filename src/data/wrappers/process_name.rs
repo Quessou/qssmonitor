@@ -9,3 +9,9 @@ impl From<String> for ProcessName {
         ProcessName(value)
     }
 }
+
+impl Ord for ProcessName {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.cmp(&other.0)
+    }
+}

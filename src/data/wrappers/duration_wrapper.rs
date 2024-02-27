@@ -27,3 +27,11 @@ impl Default for DurationWrapper {
         }
     }
 }
+
+impl From<i64> for DurationWrapper {
+    fn from(value: i64) -> Self {
+        DurationWrapper {
+            duration: chrono::Duration::seconds(value),
+        }
+    }
+}
