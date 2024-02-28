@@ -62,7 +62,6 @@ impl<
         let (sampling_sender, mut sampling_receiver) = channel::<QssMonitorMessage>(5);
         let clone = self.clone();
         let sampling_task = task::spawn(async move {
-            tracing::error!("log at the beginning of the async move block");
             if clone.aggregator.lock().await.start_session().await.is_err() {
                 tracing::error!("Session creation in DB failed. Panicking.");
                 panic!();
