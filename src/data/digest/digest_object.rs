@@ -27,7 +27,6 @@ fn group_streaks_by_process_name(streaks: &[Streak]) -> Vec<Vec<&Streak>> {
     let mut grouped_streaks: Vec<Vec<&Streak>> = vec![];
     let sorted_streaks: Vec<&Streak> = streaks
         .iter()
-        .map(|s| s)
         .sorted_by(|s1, s2| s1.process_name.cmp(&s2.process_name))
         .collect();
     for (_, group) in &sorted_streaks.into_iter().group_by(|s| &s.process_name) {
@@ -116,8 +115,6 @@ impl TryFrom<Report> for Digest {
 mod tests {
 
     use std::collections::HashSet;
-
-    use chrono::DateTime;
 
     use super::*;
     use crate::data::wrappers::{ProcessName, WindowName};
@@ -210,6 +207,7 @@ mod tests {
             productivity_data: Some(ProductivityData {
                 total_time: 30.into(),
                 productive_time: 30.into(),
+                pause_time: 0.into(),
             }),
             longest_streaks: vec![],
         };

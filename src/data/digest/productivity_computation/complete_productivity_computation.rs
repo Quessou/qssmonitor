@@ -46,10 +46,18 @@ impl ProductivityComputation for CompleteProductivityComputation {
                 .non_productive_apps
                 .iter()
                 .any(|a| streak.process_name.0.contains(a))
+                && streak.pid != -1
             {
                 return streak.duration;
             }
             chrono::Duration::seconds(0)
+        };
+        let compute_pause_time = |streak: &Streak| -> chrono::Duration {
+            if streak.pid == -1 {
+                streak.duration
+            } else {
+                chrono::Duration::seconds(0)
+            }
         };
 
         let productive_time = report
@@ -61,6 +69,11 @@ impl ProductivityComputation for CompleteProductivityComputation {
             .streaks
             .iter()
             .fold(chrono::Duration::seconds(0), |acc, s| acc + s.duration);
+        let pause_time = report
+            .streaks
+            .iter()
+            .map(compute_pause_time)
+            .fold(chrono::Duration::seconds(0), |acc, d| acc + d);
         ProductivityData {
             total_time: DurationWrapper {
                 duration: total_time,
@@ -68,6 +81,7 @@ impl ProductivityComputation for CompleteProductivityComputation {
             productive_time: DurationWrapper {
                 duration: productive_time,
             },
+            pause_time: pause_time.into(),
         }
     }
 }

@@ -4,7 +4,7 @@ use clap::ArgMatches;
 use futures::StreamExt;
 use signal_hook::consts::signal::*;
 use signal_hook_tokio::Signals;
-use std::{borrow::BorrowMut, sync::Arc};
+use std::sync::Arc;
 use tokio::{
     sync::mpsc::channel,
     sync::Mutex,
@@ -158,6 +158,6 @@ impl<
         *is_paused = !*is_paused;
     }
     pub async fn is_paused(&mut self) -> bool {
-        return *self.is_paused.lock().await;
+        *self.is_paused.lock().await
     }
 }

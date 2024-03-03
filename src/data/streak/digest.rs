@@ -41,7 +41,7 @@ impl From<Vec<&Streak>> for StreakDigest {
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashSet, time::Duration};
+    use std::collections::HashSet;
 
     use chrono::DateTime;
 
