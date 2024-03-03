@@ -9,3 +9,8 @@ impl From<String> for WindowName {
         WindowName(value)
     }
 }
+impl From<&str> for WindowName {
+    fn from(value: &str) -> Self {
+        WindowName(value.into())
+    }
+}

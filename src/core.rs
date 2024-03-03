@@ -4,7 +4,7 @@ use clap::ArgMatches;
 use futures::StreamExt;
 use signal_hook::consts::signal::*;
 use signal_hook_tokio::Signals;
-use std::sync::Arc;
+use std::{borrow::BorrowMut, sync::Arc};
 use tokio::{
     sync::mpsc::channel,
     sync::Mutex,
@@ -14,8 +14,10 @@ use tracing::{self, instrument, Instrument};
 
 use crate::{
     aggregator::Aggregator,
-    data::digest::{Builder as DigestBuilder, ProductivityComputation},
-    data::{Report, SampleBuilder},
+    data::{
+        digest::{Builder as DigestBuilder, ProductivityComputation},
+        Report, Sample, SampleBuilder,
+    },
     database::DatabaseAccess,
     default_config::QssMonitorConfig,
     messages::QssMonitorMessage,
@@ -29,6 +31,7 @@ pub struct Core<
     sample_builder: Arc<Mutex<SampleBuilder>>,
     pub aggregator: Arc<Mutex<Aggregator<DB>>>,
     pub digest_builder: Arc<Mutex<DigestBuilder<Prod>>>,
+    is_paused: Arc<Mutex<bool>>,
 }
 
 impl<
@@ -49,6 +52,7 @@ impl<
             sample_builder: Arc::new(Mutex::new(sample_builder)),
             aggregator: Arc::new(Mutex::new(aggregator)),
             digest_builder: Arc::new(Mutex::new(digest_builder)),
+            is_paused: Arc::new(Mutex::new(false)),
         }
     }
 
@@ -60,25 +64,34 @@ impl<
         router: Option<Router>,
     ) -> Result<(), ()> {
         let (sampling_sender, mut sampling_receiver) = channel::<QssMonitorMessage>(5);
-        let clone = self.clone();
+        let core_clone = self.clone();
         let sampling_task = task::spawn(async move {
-            if clone.aggregator.lock().await.start_session().await.is_err() {
+            if core_clone
+                .aggregator
+                .lock()
+                .await
+                .start_session()
+                .await
+                .is_err()
+            {
                 tracing::error!("Session creation in DB failed. Panicking.");
                 panic!();
             }
-            // TODO : replace this by configuration sampling time
             let mut interval = tokio::time::interval(config.polling_interval.to_std().unwrap());
-            // TODO : Replace this loop by a check on sampling_receiver
             while let Err(tokio::sync::mpsc::error::TryRecvError::Empty) =
                 sampling_receiver.try_recv()
             {
                 interval.tick().await;
-                let sample = clone.sample_builder.lock().await.build_sample().await;
+                let sample = if *core_clone.is_paused.lock().await {
+                    Some(Sample::build_pause_sample())
+                } else {
+                    core_clone.sample_builder.lock().await.build_sample().await
+                };
                 if sample.is_none() {
                     tracing::warn!("Could not build sample, skipping");
                     continue;
                 }
-                clone
+                core_clone
                     .aggregator
                     .lock()
                     .await
@@ -138,5 +151,13 @@ impl<
         let _toto = futures::join!(sampling_task, serving_task, signal_polling_task);
 
         Ok(())
+    }
+
+    pub async fn toggle_pause(&mut self) {
+        let mut is_paused = self.is_paused.lock().await;
+        *is_paused = !*is_paused;
+    }
+    pub async fn is_paused(&mut self) -> bool {
+        return *self.is_paused.lock().await;
     }
 }

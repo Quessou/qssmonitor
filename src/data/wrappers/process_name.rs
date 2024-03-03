@@ -9,6 +9,11 @@ impl From<String> for ProcessName {
         ProcessName(value)
     }
 }
+impl From<&str> for ProcessName {
+    fn from(value: &str) -> Self {
+        ProcessName(value.into())
+    }
+}
 
 impl Ord for ProcessName {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
