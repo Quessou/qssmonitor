@@ -35,3 +35,9 @@ impl From<i64> for DurationWrapper {
         }
     }
 }
+
+impl From<chrono::Duration> for DurationWrapper {
+    fn from(value: chrono::Duration) -> Self {
+        DurationWrapper { duration: value }
+    }
+}

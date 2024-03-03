@@ -6,6 +6,9 @@ use crate::data::wrappers::{ProcessName, WindowName};
 
 use super::wrappers::WebsiteName;
 
+static PAUSE_PID: i32 = -1;
+static PAUSE_PROCESS_NAME: &str = "pause";
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Sample {
     pub timestamp: DateTime<chrono::Local>,
@@ -28,6 +31,16 @@ impl Sample {
             window_name,
             website_name,
             pid,
+        }
+    }
+
+    pub fn build_pause_sample() -> Self {
+        Sample {
+            timestamp: chrono::Local::now(),
+            process_name: PAUSE_PROCESS_NAME.into(),
+            window_name: PAUSE_PROCESS_NAME.into(),
+            website_name: None,
+            pid: PAUSE_PID,
         }
     }
 }

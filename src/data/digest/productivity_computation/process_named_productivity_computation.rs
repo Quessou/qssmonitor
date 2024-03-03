@@ -56,6 +56,7 @@ impl ProductivityComputation for ProcessNamedProductivityComputation {
             productive_time: DurationWrapper {
                 duration: tmp_productivity_data.productive_time,
             },
+            pause_time: 0.into(), // Who cares, this class is actually deprecated
         }
     }
 }

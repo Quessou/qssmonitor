@@ -1,4 +1,10 @@
-use axum::{extract::State, routing::get, Router};
+use axum::{
+    extract::State,
+    http::response::Builder as ResponseBuilder,
+    http::Response as HttpResponse,
+    routing::{get, post},
+    Router,
+};
 
 use crate::{data::digest::ProductivityComputation, database::DatabaseAccess, Core};
 
@@ -25,6 +31,24 @@ pub async fn get_last_digest<
     serde_json::to_string(&digest).unwrap()
 }
 
+pub async fn toggle_pause<
+    DB: DatabaseAccess + std::fmt::Debug + std::marker::Sync + 'static,
+    PC: ProductivityComputation + 'static,
+>(
+    State(mut core): State<Core<DB, PC>>,
+) -> HttpResponse<String> {
+    core.toggle_pause().await;
+    let response_body = if core.is_paused().await {
+        "QSSMonitor paused"
+    } else {
+        "QSSMonitor resumed"
+    };
+    ResponseBuilder::new()
+        .status(200)
+        .body(response_body.into())
+        .unwrap()
+}
+
 pub async fn generate_api<
     DB: DatabaseAccess + std::fmt::Debug + std::marker::Sync + 'static,
     PC: ProductivityComputation + 'static,
@@ -34,5 +58,6 @@ pub async fn generate_api<
     Router::new()
         .route("/last_report", get(get_last_report))
         .route("/last_digest", get(get_last_digest))
+        .route("/toggle_pause", post(toggle_pause))
         .with_state(core)
 }
